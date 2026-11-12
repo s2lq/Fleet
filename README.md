@@ -44,6 +44,7 @@ Close all Roblox windows before turning multi-instance on. The exe is not code-s
 - A details view with account age, Premium, friends and followers
 - Import from other managers (JSON, text or `user:pass:cookie` lists)
 - Bulk actions on the selected accounts: launch, stop, mute, tag, group, colour, private server, check, remove
+- Account tools: summary, quick selection, sort, bulk rename, bulk edit, duplicate finder and export of the selected accounts
 - Move everything to another PC as one password-protected file
 
 **Launching**

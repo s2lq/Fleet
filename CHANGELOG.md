@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.0
+
+- Account tools (Tools > Account tools): summary of all accounts, quick selection (all, invert, working, signed out, running, by group), sort and reorder, bulk rename, bulk edit of game, note, FPS cap and proxy, duplicate finder, and export of the selected accounts as cookies, user:pass:cookie or a summary CSV
+
 ## 1.1.0
 
 - Four light themes (Paper, Snow, Sand, Sky); the whole interface follows the theme
