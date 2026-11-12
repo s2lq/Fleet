@@ -47,7 +47,7 @@ namespace Fleet
             List<Screen> targets = c.LayoutAllScreens ? screens.OrderBy(s => !s.Primary).ThenBy(s => s.Bounds.X).ToList() : new List<Screen> { screens[Math.Max(0, Math.Min(c.LayoutMonitor, screens.Length - 1))] };
             int n = Math.Max(Engine.Live.Count, Math.Max(selected.Count, 1));
             if (Engine.Live.Count == 0 && selected.Count == 0) n = 4;
-            int[] counts = Engine.Spread(n, targets.Select(s => (double)s.WorkingArea.Width * s.WorkingArea.Height).ToArray());
+            List<Rectangle> plan = Engine.PlanFor(n, targets, Engine.LearnedMin);
             int minX = targets.Min(s => s.Bounds.X), minY = targets.Min(s => s.Bounds.Y), maxX = targets.Max(s => s.Bounds.Right), maxY = targets.Max(s => s.Bounds.Bottom);
             float scale = Math.Min((pv.Width - 60) / (maxX - minX), (pv.Height - 110) / (maxY - minY));
             float ox = pv.X + (pv.Width - (maxX - minX) * scale) / 2, oy = pv.Y + 36;
@@ -57,14 +57,12 @@ namespace Fleet
                 Rectangle b = targets[k].WorkingArea;
                 RectangleF mr = new RectangleF(ox + (b.X - minX) * scale, oy + (b.Y - minY) * scale, b.Width * scale, b.Height * scale);
                 ui.Fill(mr, 4, Pal.Panel);
-                int cnt = counts[k];
-                if (cnt > 0)
                 {
-                    List<RectangleF> slots = Layouts.Smart(cnt, b.Width / (double)b.Height);
-                    for (int i = 0; i < cnt; i++, idx++)
+                    List<Rectangle> mine = plan.Where(p => b.Contains(new Point(p.X + p.Width / 2, p.Y + p.Height / 2))).ToList();
+                    for (int i = 0; i < mine.Count; i++, idx++)
                     {
-                        RectangleF s = slots[i];
-                        RectangleF cell = new RectangleF(mr.X + s.X * mr.Width, mr.Y + s.Y * mr.Height, s.Width * mr.Width, s.Height * mr.Height);
+                        Rectangle s = mine[i];
+                        RectangleF cell = new RectangleF(ox + (s.X - minX) * scale, oy + (s.Y - minY) * scale, s.Width * scale, s.Height * scale);
                         bool live = idx < Engine.Live.Count;
                         ui.Fill(cell, 0, live ? Pal.Panel2 : Pal.Bg);
                         ui.Stroke(cell, 0, Pal.Line2, 1f);
@@ -75,6 +73,7 @@ namespace Fleet
                 ui.Stroke(mr, 4, Pal.Line2, 1.4f);
             }
             ui.TextIn(Engine.Live.Count > 0 ? Lang.F("{0} window(s) running", Engine.Live.Count) : Lang.F("Preview with {0} window(s)", n), new RectangleF(pv.X, pv.Bottom - 56, pv.Width, 30), Fonts.Small, Pal.Muted, StringAlignment.Center);
+            if (Engine.LearnedMin.Width > 0) ui.TextIn(Lang.F("Roblox would not go smaller than {0} x {1}", Engine.LearnedMin.Width, Engine.LearnedMin.Height), new RectangleF(pv.X, pv.Bottom - 32, pv.Width, 26), Fonts.Small, Pal.Warn, StringAlignment.Center);
         }
     }
 }

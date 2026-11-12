@@ -63,7 +63,30 @@ namespace Fleet
 
         [StructLayout(LayoutKind.Sequential)] public struct CpuRate { public uint ControlFlags; public uint CpuRatePercent; }
 
-        public const uint SWP_NOZORDER = 0x4, SWP_NOACTIVATE = 0x10, SWP_SHOWWINDOW = 0x40;
+        public const uint SWP_NOZORDER = 0x4, SWP_NOACTIVATE = 0x10, SWP_SHOWWINDOW = 0x40, SWP_FRAMECHANGED = 0x20, SWP_NOSENDCHANGING = 0x400;
+
+        [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
+        [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
+        [DllImport("user32.dll")] public static extern bool IsIconic(IntPtr h);
+        [DllImport("user32.dll")] public static extern bool IsZoomed(IntPtr h);
+        [DllImport("dwmapi.dll")] static extern int DwmGetWindowAttribute(IntPtr hwnd, int attr, out RECT value, int size);
+
+        // the part of the window you can see (Windows 10 and 11 add an invisible border around it)
+        public static System.Drawing.Rectangle VisibleRect(IntPtr h)
+        {
+            RECT outer;
+            if (!GetWindowRect(h, out outer)) return System.Drawing.Rectangle.Empty;
+            RECT f;
+            try { if (DwmGetWindowAttribute(h, 9, out f, 16) == 0) return System.Drawing.Rectangle.FromLTRB(f.Left, f.Top, f.Right, f.Bottom); }
+            catch (Exception) { }
+            return System.Drawing.Rectangle.FromLTRB(outer.Left, outer.Top, outer.Right, outer.Bottom);
+        }
+
+        public static System.Drawing.Rectangle OuterRect(IntPtr h)
+        {
+            RECT outer;
+            return GetWindowRect(h, out outer) ? System.Drawing.Rectangle.FromLTRB(outer.Left, outer.Top, outer.Right, outer.Bottom) : System.Drawing.Rectangle.Empty;
+        }
 
         public static Dictionary<uint, IntPtr> WindowsOf(HashSet<uint> pids)
         {
