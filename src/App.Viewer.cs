@@ -78,7 +78,7 @@ namespace Fleet
             ui.Fill(new RectangleF(0, 0, ui.W, ui.H), 0, Color.FromArgb((int)(190 * e), Pal.Bg.R, Pal.Bg.G, Pal.Bg.B));
             if (ui.Pressed && !card.Contains(ui.Mouse)) { ui.Forget("viewer"); CloseViewer(); return; }
             ui.Fill(new RectangleF(card.X - 1, card.Y - 1, card.Width + 2, card.Height + 2), 14, Pal.Line);
-            ui.Fill(card, 13, Pal.Panel);
+            ui.Frost(card, 13, Pal.Panel, 200);
 
             ui.Text(Ui.Fit(ui, a.Label, Fonts.H2, w - 80), card.X + 28, card.Y + 22, Fonts.H2, Pal.Text);
             ui.Text("@" + a.Name, card.X + 28, card.Y + 50, Fonts.Small, Pal.Muted);

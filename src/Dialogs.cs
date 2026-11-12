@@ -5,6 +5,55 @@ using System.Windows.Forms;
 namespace Fleet
 {
 
+    // a dialog with Fleet's own title bar. Controls are placed as if the form had no title; they are moved down under it.
+    public class DialogForm : Form
+    {
+        const int HeaderH = 44;
+        readonly Panel head;
+        readonly string title;
+
+        public static int Open;
+
+        public DialogForm(string t, int w, int h)
+        {
+            title = t;
+            Text = t;
+            FormBorderStyle = FormBorderStyle.None;
+            StartPosition = FormStartPosition.CenterParent;
+            ShowInTaskbar = false;
+            ClientSize = new Size(w, h + HeaderH);
+            head = new Panel { Left = 1, Top = 1, Width = w - 2, Height = HeaderH - 1, BackColor = Pal.Panel, Tag = "hdr" };
+            Label cap = new Label { Text = Lang.T(t), Left = 16, Top = 0, Height = HeaderH - 1, Width = w - 80, TextAlign = ContentAlignment.MiddleLeft, ForeColor = Pal.Text, BackColor = Color.Transparent, Font = new Font(Fonts.Body.FontFamily, 10f, FontStyle.Bold) };
+            Label x = new Label { Text = "\u2715", Left = w - 2 - 46, Top = 0, Width = 46, Height = HeaderH - 1, TextAlign = ContentAlignment.MiddleCenter, ForeColor = Pal.Muted, BackColor = Color.Transparent, Cursor = Cursors.Hand, Font = new Font(Fonts.Body.FontFamily, 10f) };
+            x.MouseEnter += delegate { x.BackColor = Color.FromArgb(196, 43, 28); x.ForeColor = Color.White; };
+            x.MouseLeave += delegate { x.BackColor = Color.Transparent; x.ForeColor = Pal.Muted; };
+            x.Click += delegate { DialogResult = DialogResult.Cancel; Close(); };
+            MouseEventHandler drag = delegate (object o, MouseEventArgs e)
+            {
+                if (e.Button != MouseButtons.Left || Environment.OSVersion.Platform != PlatformID.Win32NT) return;
+                Native.ReleaseCapture(); Native.SendMessage(Handle, 0xA1, (IntPtr)2, IntPtr.Zero);
+            };
+            head.MouseDown += drag; cap.MouseDown += drag;
+            head.Controls.Add(cap); head.Controls.Add(x);
+            Controls.Add(head);
+            HandleCreated += delegate { Native.RoundCorners(Handle); };
+            Shown += delegate { Open++; };
+            FormClosed += delegate { Open--; };
+        }
+
+        protected override void OnControlAdded(ControlEventArgs e)
+        {
+            base.OnControlAdded(e);
+            if (!(e.Control.Tag is string && (string)e.Control.Tag == "hdr")) e.Control.Top += HeaderH;
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            using (Pen p = new Pen(Pal.Line2)) e.Graphics.DrawRectangle(p, 0, 0, Width - 1, Height - 1);
+        }
+    }
+
     public static class Dialogs
     {
         static Color Back { get { return Pal.Bg; } }
@@ -12,15 +61,9 @@ namespace Fleet
 
         static Form Make(string title, int w, int h)
         {
-            Form f = new Form();
-            f.Text = title;
-            f.ClientSize = new Size(w, h);
-            f.StartPosition = FormStartPosition.CenterParent;
-            f.FormBorderStyle = FormBorderStyle.FixedDialog;
-            f.MaximizeBox = false; f.MinimizeBox = false; f.ShowInTaskbar = false;
+            DialogForm f = new DialogForm(title, w, h);
             f.BackColor = Back; f.ForeColor = Pal.Text;
             f.Font = new Font(Fonts.Body.FontFamily, 10f);
-            f.HandleCreated += delegate { Native.DarkTitleBar(f.Handle); };
             return f;
         }
 

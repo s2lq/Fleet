@@ -18,6 +18,7 @@ namespace Fleet
         string updateText = "";
         string lastPage = "";
         int lastToast = Log.Total;
+        int tourNotBefore;
         readonly List<Toast> toasts = new List<Toast>();
 
         class Toast { public string Text; public float Born; public Color Tint; }
@@ -68,11 +69,13 @@ namespace Fleet
         public void Render(Ui ui)
         {
             float topH = 76;
-            ui.Blocked = detail != null || viewing != null || news != null || tourStep >= 0;
+            ui.Blocked = detail != null || viewing != null || news != null || tourStep >= 0 || (introStart >= 0f && !introDone);
+            holes.Clear();
+            if (!introDone) introLogoHidden = true;
             DrawTopBar(ui, topH);
             float cw = Math.Min(1200, ui.W - 64);
             RectangleF area = new RectangleF((ui.W - cw) / 2, topH + 8, cw, ui.H - topH - 20);
-            if (!Store.Cfg.FirstRunDone) { DrawWizard(ui, area); ui.Overlay(); return; }
+            if (!Store.Cfg.FirstRunDone) { DrawWizard(ui, area); ui.Overlay(); DrawIntro(ui); return; }
             if (page != lastPage)
             {
                 lastPage = page;
@@ -103,9 +106,10 @@ namespace Fleet
             if (viewing != null) DrawViewer(ui);
             if (news != null) DrawWhatsNew(ui);
             if (tourStep >= 0) DrawTour(ui);
-            else if (Store.Cfg.FirstRunDone && !Store.Cfg.TourDone && news == null) StartTour();
-            if (tourStep < 0) DrawToasts(ui);
+            else if (Store.Cfg.FirstRunDone && !Store.Cfg.TourDone && news == null && introDone && DialogForm.Open == 0 && Environment.TickCount - tourNotBefore > 0) StartTour();
+            if (tourStep < 0 && news == null) DrawToasts(ui);
             ui.Overlay();
+            DrawIntro(ui);
         }
 
         void DrawToasts(Ui ui)
@@ -132,7 +136,7 @@ namespace Fleet
                 float y = ui.H - 24 - h - i * 54;
                 RectangleF r = new RectangleF(x, y, w, h);
                 ui.Fill(new RectangleF(r.X - 1, r.Y - 1, r.Width + 2, r.Height + 2), 12, Pal.Line);
-                ui.Fill(r, 11, Pal.Panel2);
+                ui.Frost(r, 11, Pal.Panel2, 205);
                 ui.Stroke(r, 11, Pal.Line2, 1f);
                 ui.Fill(new RectangleF(r.X + 10, r.Y + 12, 3, r.Height - 24), 1.5f, t.Tint);
                 ui.TextIn(Ui.Fit(ui, t.Text, Fonts.Body, w - 40), new RectangleF(r.X + 24, r.Y, w - 36, h), Fonts.Body, Pal.Text, StringAlignment.Near);
@@ -143,8 +147,9 @@ namespace Fleet
         void DrawTopBar(Ui ui, float h)
         {
             float lx = ui.W < 1150 ? 20 : 32;
-            ui.Logo(new RectangleF(lx, 18, 40, 40));
+            if (!introLogoHidden) ui.Logo(new RectangleF(lx, 18, 40, 40));
             if (ui.W >= 1150) ui.Text("Fleet", lx + 52, 24, Fonts.Get(22, true), Pal.Text);
+            DrawCaption(ui);
 
             Font f = Fonts.BodyB;
             float pad = ui.W < 1250 ? 24 : 32;
@@ -155,6 +160,7 @@ namespace Fleet
             float rightNeed = ui.W < 1250 ? 150 : 290;
             if (x0 + total > ui.W - rightNeed) x0 = Math.Max(leftEdge, ui.W - rightNeed - total);
             RectangleF bar = new RectangleF(x0, 18, total, 42);
+            holes.Add(bar);
             ui.Glass(bar, 21, 0);
             int cur = Array.IndexOf(Pages, page);
             float tx = bar.X + 4 + widths.Take(cur).Sum();
@@ -177,12 +183,14 @@ namespace Fleet
 
             string run = Lang.F("{0} running", Engine.Live.Count);
             float rw = ui.ChipWidth(run);
-            ui.Chip(run, ui.W - 24 - rw, 28, Engine.Live.Count > 0 ? Pal.Good : Pal.Muted);
+            ui.Chip(run, ui.W - 20 - rw, 40, Engine.Live.Count > 0 ? Pal.Good : Pal.Muted);
+            holes.Add(new RectangleF(ui.W - 24 - rw, 36, rw + 24, 32));
             if (ui.W >= 1250)
             {
                 string mi = Engine.MultiActive ? "Multi-instance on" : "Multi-instance off";
                 float mw = ui.ChipWidth(mi);
-                ui.Chip(mi, ui.W - 24 - rw - 10 - mw, 28, Engine.MultiActive ? Pal.Text : Pal.Warn);
+                ui.Chip(mi, ui.W - 20 - rw - 10 - mw, 40, Engine.MultiActive ? Pal.Text : Pal.Warn);
+                holes.Add(new RectangleF(ui.W - 24 - rw - 10 - mw, 36, mw + 8, 32));
             }
         }
 

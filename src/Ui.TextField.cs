@@ -87,7 +87,7 @@ namespace Fleet
             FieldState st = State(id);
             bool focus = Focus == id;
             bool over = Over(r);
-            if (over) WantHand = true;
+            if (over) WantText = true;
             Anim(id + ".f", focus);
             Fill(r, 9, Pal.Panel);
             Stroke(r, 9, focus ? Pal.Alpha(Pal.A, 200) : Pal.Line, 1f);

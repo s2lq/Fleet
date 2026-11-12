@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace Fleet
@@ -82,8 +83,35 @@ namespace Fleet
             View.Invalidate();
         }
 
+        [StructLayout(LayoutKind.Sequential)] struct RECT { public int L, T, R, B; }
+
+        static bool OnWindows { get { return Environment.OSVersion.Platform == PlatformID.Win32NT; } }
+
+        // Fleet draws its own title bar. The window keeps its real frame (so snapping, shadow and resizing still work),
+        // but the client area is stretched over the whole thing.
         protected override void WndProc(ref Message m)
         {
+            if (OnWindows && FormBorderStyle != FormBorderStyle.None)
+            {
+                if (m.Msg == 0x83 && m.WParam != IntPtr.Zero)
+                {
+                    if (WindowState == FormWindowState.Maximized)
+                    {
+                        Rectangle wa = Screen.FromHandle(Handle).WorkingArea;
+                        RECT r = new RECT { L = wa.Left, T = wa.Top, R = wa.Right, B = wa.Bottom };
+                        Marshal.StructureToPtr(r, m.LParam, false);
+                    }
+                    m.Result = IntPtr.Zero;
+                    return;
+                }
+                if (m.Msg == 0x84)
+                {
+                    int v = (int)(long)m.LParam;
+                    Point p = PointToClient(new Point((short)(v & 0xFFFF), (short)((v >> 16) & 0xFFFF)));
+                    int hit = HitTest(p);
+                    if (hit != 1) { m.Result = (IntPtr)hit; return; }
+                }
+            }
             if (m.Msg == 0x312)
             {
                 switch ((int)m.WParam)
@@ -96,6 +124,26 @@ namespace Fleet
                 }
             }
             base.WndProc(ref m);
+        }
+
+        // 1 = client. Edges resize, the empty part of the top bar drags.
+        int HitTest(Point p)
+        {
+            if (WindowState == FormWindowState.Normal)
+            {
+                int e = 6;
+                bool l = p.X < e, r = p.X >= ClientSize.Width - e, t = p.Y < e, b = p.Y >= ClientSize.Height - e;
+                if (t && l) return 13; if (t && r) return 14; if (b && l) return 16; if (b && r) return 17;
+                if (l) return 10; if (r) return 11; if (t) return 12; if (b) return 15;
+            }
+            return View.InDragArea(p) ? 2 : 1;
+        }
+
+        public void CaptionAction(int which)
+        {
+            if (which == 0) WindowState = FormWindowState.Minimized;
+            else if (which == 1) WindowState = WindowState == FormWindowState.Maximized ? FormWindowState.Normal : FormWindowState.Maximized;
+            else Close();
         }
 
         void Unhot()

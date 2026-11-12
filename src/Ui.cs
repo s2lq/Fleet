@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.Drawing.Text;
 using System.Windows.Forms;
 
@@ -102,8 +103,8 @@ namespace Fleet
             }
             int mode = Store.Cfg.Motion;
             Minimal = Store.Cfg.ReduceMotion || mode == 2 || (Store.Cfg.PowerSave && onBattery);
-            FastMs = mode == 1 ? 16 : 33;
-            WallMs = mode == 1 ? 50 : 100;
+            FastMs = 16;
+            WallMs = mode == 1 ? 16 : 33;
         }
     }
 
@@ -122,7 +123,12 @@ namespace Fleet
         public string Typed = "";
         public List<Keys> KeyHits = new List<Keys>();
         public string Active, Focus;
-        public bool NeedFrames, WantHand;
+        public bool NeedFrames, WantHand, WantText;
+        public Bitmap Target;       // the layer being drawn, so overlays can blur what is behind them
+        public struct GlassRect { public RectangleF R; public float Rad; }
+        public readonly List<GlassRect> GlassRects = new List<GlassRect>();
+        public float Dt = 0.016f;
+        float lastTime = -1f;
         public int NeedMs;          // something that moves all the time asks for this many milliseconds between frames
         public void Want(int ms) { if (NeedMs == 0 || ms < NeedMs) NeedMs = ms; }
         PointF local;
@@ -141,10 +147,14 @@ namespace Fleet
         public void BeginFrame(Graphics g, float w, float h)
         {
             G = g; W = w; H = h;
+            GlassRects.Clear();
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
             g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-            local = Mouse; clipHit = true; NeedFrames = false; NeedMs = 0; WantHand = false; ImeValid = false;
+            local = Mouse; clipHit = true; NeedFrames = false; NeedMs = 0; WantHand = false; WantText = false; ImeValid = false;
+            // animations follow the clock, not the frame count, so they look the same at any frame rate
+            Dt = lastTime < 0 ? 0.016f : Math.Max(0.001f, Math.Min(0.1f, Time - lastTime));
+            lastTime = Time;
         }
 
         public void EndFrame()
@@ -195,13 +205,16 @@ namespace Fleet
             Want(80);
         }
         public bool Blocked;
+        public static float EaseOut(float t) { t = Math.Max(0f, Math.Min(1f, t)); float u = 1f - t; return 1f - u * u * u; }
+        public static float EaseInOut(float t) { t = Math.Max(0f, Math.Min(1f, t)); return t < 0.5f ? 4f * t * t * t : 1f - (float)Math.Pow(-2f * t + 2f, 3) / 2f; }
+        public static float EaseBack(float t) { t = Math.Max(0f, Math.Min(1f, t)); float c = 1.70158f, u = t - 1f; return 1f + (c + 1f) * u * u * u + c * u * u; }
         public bool Over(RectangleF r) { return !Blocked && clipHit && r.Contains(local) && !(pickId != null && pickBox.Contains(Mouse)); }
 
         public float Anim(string id, float target, float speed)
         {
             float v;
             if (!anim.TryGetValue(id, out v)) v = target;
-            if (Math.Abs(target - v) > 0.004f) { v += (target - v) * speed; NeedFrames = true; }
+            if (Math.Abs(target - v) > 0.002f) { v += (target - v) * (1f - (float)Math.Pow(1f - speed, Dt * 30f)); NeedFrames = true; }
             else v = target;
             anim[id] = v;
             return v;
@@ -238,11 +251,49 @@ namespace Fleet
             using (LinearGradientBrush br = new LinearGradientBrush(r, a, b, angle)) G.FillPath(br, p);
         }
 
+        // a see-through panel. the canvas puts a blurred copy of the wallpaper behind it
         public void Glass(RectangleF r, float rad, float lift)
         {
             rad = Math.Min(rad, 12);
-            Fill(r, rad, Pal.Mix(Pal.Panel, Pal.Panel2, lift));
+            Fill(r, rad, Pal.Alpha(Pal.Mix(Pal.Panel, Pal.Panel2, lift), 150));
             Stroke(r, rad, Pal.Mix(Pal.Line, Pal.Line2, lift), 1f);
+            PointF[] pts = { new PointF(r.X, r.Y), new PointF(r.Right, r.Bottom) };
+            using (Matrix m = G.Transform) m.TransformPoints(pts);
+            float sc = Math.Max(0.01f, Math.Abs(pts[1].X - pts[0].X) / Math.Max(1f, r.Width));
+            GlassRects.Add(new GlassRect { R = new RectangleF(pts[0].X, pts[0].Y, pts[1].X - pts[0].X, pts[1].Y - pts[0].Y), Rad = rad * sc });
+        }
+
+        // like Glass, but for things on top of other things (popups, notifications): blurs whatever was drawn under it
+        public void Frost(RectangleF r, float rad, Color tint, int alpha)
+        {
+            try
+            {
+                if (Target != null && !Motion.Minimal)
+                {
+                    PointF[] pts = { new PointF(r.X, r.Y), new PointF(r.Right, r.Bottom) };
+                    using (Matrix m = G.Transform) m.TransformPoints(pts);
+                    Rectangle px = Rectangle.Intersect(new Rectangle(0, 0, Target.Width, Target.Height), Rectangle.Round(new RectangleF(pts[0].X, pts[0].Y, pts[1].X - pts[0].X, pts[1].Y - pts[0].Y)));
+                    if (px.Width > 8 && px.Height > 8)
+                    {
+                        using (Bitmap crop = Target.Clone(px, Target.PixelFormat))
+                        using (Bitmap small = new Bitmap(Math.Max(2, px.Width / 6), Math.Max(2, px.Height / 6), PixelFormat.Format32bppPArgb))
+                        {
+                            using (Graphics sg = Graphics.FromImage(small)) { sg.InterpolationMode = InterpolationMode.HighQualityBilinear; sg.DrawImage(crop, 0, 0, small.Width, small.Height); }
+                            GraphicsState st = G.Save();
+                            using (GraphicsPath p = Round(r, rad))
+                            {
+                                G.SetClip(p, CombineMode.Intersect);
+                                G.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                                G.CompositingMode = CompositingMode.SourceCopy;
+                                G.DrawImage(small, r);
+                            }
+                            G.Restore(st);
+                        }
+                    }
+                }
+            }
+            catch (Exception) { }
+            Fill(r, rad, Pal.Alpha(tint, alpha));
         }
 
         void GlassOld(RectangleF r, float rad, float lift)
@@ -529,7 +580,7 @@ namespace Fleet
             GraphicsState gs = G.Save();
             G.SetClip(new RectangleF(pickBox.X - 3, pickBox.Y - 3, pickBox.Width + 6, (pickBox.Height + 6) * open));
             Fill(new RectangleF(pickBox.X - 1, pickBox.Y - 1, pickBox.Width + 2, pickBox.Height + 2), 10, Pal.Line);
-            Fill(pickBox, 9, Pal.Panel2);
+            Frost(pickBox, 9, Pal.Panel2, 205);
             Stroke(pickBox, 9, Pal.Line2, 1f);
             if (pickBox.Contains(Mouse) && Math.Abs(Wheel) > 0.1f) pickScroll = Math.Max(0, Math.Min(Math.Max(0, pickItems.Length - rows), pickScroll - Wheel / 120f));
             int first = (int)pickScroll;

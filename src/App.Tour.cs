@@ -91,7 +91,7 @@ namespace Fleet
                 using (SolidBrush b = new SolidBrush(Pal.Panel)) ui.G.FillPolygon(b, new PointF[] { new PointF(ax - 9, card.Y + 1.5f), new PointF(ax + 9, card.Y + 1.5f), new PointF(ax, card.Y - 9) });
             }
             ui.Fill(new RectangleF(card.X - 1, card.Y - 1, card.Width + 2, card.Height + 2), 14, Pal.Line2);
-            ui.Fill(card, 13, Pal.Panel);
+            ui.Frost(card, 13, Pal.Panel, 205);
 
             // progress bar along the top of the card
             float prog = ui.Anim("tour.p", (tourStep + 1f) / Steps.Length, 0.18f);

@@ -22,6 +22,8 @@ namespace Fleet
         [DllImport("kernel32.dll")] public static extern bool SetInformationJobObject(IntPtr job, int cls, ref CpuRate info, int size);
         [DllImport("kernel32.dll")] public static extern bool AssignProcessToJobObject(IntPtr job, IntPtr process);
         [DllImport("kernel32.dll")] public static extern bool SetProcessWorkingSetSizeEx(IntPtr p, IntPtr min, IntPtr max, uint flags);
+        [DllImport("user32.dll")] public static extern bool ReleaseCapture();
+        [DllImport("user32.dll")] public static extern IntPtr SendMessage(IntPtr h, uint msg, IntPtr w, IntPtr l);
         [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr h, uint msg, IntPtr w, IntPtr l);
         [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
         [DllImport("user32.dll")] public static extern int SetWindowLong(IntPtr h, int idx, int v);
@@ -82,6 +84,13 @@ namespace Fleet
         public static void ModernControl(IntPtr hwnd)
         {
             try { SetWindowTheme(hwnd, Pal.IsLight ? "Explorer" : "DarkMode_Explorer", null); }
+            catch (Exception) { }
+        }
+
+        // rounded corners on windows 11, nothing on older ones
+        public static void RoundCorners(IntPtr hwnd)
+        {
+            try { int two = 2; DwmSetWindowAttribute(hwnd, 33, ref two, 4); }
             catch (Exception) { }
         }
 

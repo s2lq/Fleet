@@ -13,7 +13,7 @@ namespace Fleet
         readonly Timer timer = new Timer();
         readonly DateTime start = DateTime.UtcNow;
         float scale = 1f;
-        Bitmap layer;
+        Bitmap layer, blurBmp;
         bool uiDirty = true;
         int lastUi, lastWall;
         public static bool AssumeFront;     // for tests on machines without a window manager
@@ -53,11 +53,11 @@ namespace Fleet
             if (visible)
             {
                 int uiNeed = keepFast ? Motion.FastMs : keepMs;
-                int wallNeed = wallpaper.Animated ? Motion.WallMs : 0;
+                int wallNeed = wallpaper.Animated ? (wallpaper.Partial ? Motion.WallMs : Math.Max(Motion.WallMs, 100)) : 0;
                 if (front)
                 {
-                    if (uiNeed > 0 && now - lastUi >= uiNeed - 3) { Redraw(); lastUi = lastWall = now; }
-                    else if (wallNeed > 0 && now - lastWall >= wallNeed - 3) { Invalidate(); lastWall = now; }
+                    if (uiNeed > 0 && now - lastUi >= uiNeed - 3) { if (wallNeed > 0) { Region r = StepWall(); if (r != null) r.Dispose(); } Redraw(); lastUi = lastWall = now; }
+                    else if (wallNeed > 0 && now - lastWall >= wallNeed - 3) { WallTick(); lastWall = now; }
                     if (uiNeed > 0) next = uiNeed;
                     if (wallNeed > 0 && wallNeed < next) next = wallNeed;
                     if (next > 1000) next = 1000;
@@ -65,6 +65,23 @@ namespace Fleet
                 if (second) { Redraw(); lastUi = now; }
             }
             if (timer.Interval != next) timer.Interval = next;
+        }
+
+        float Now { get { return (float)(DateTime.UtcNow - start).TotalSeconds; } }
+
+        Region StepWall()
+        {
+            if (!wallpaper.Partial || Width < 2 || Height < 2) return null;
+            return wallpaper.Step((int)Math.Ceiling(Width / scale), (int)Math.Ceiling(Height / scale), scale, Now, ui.Mouse);
+        }
+
+        // repaint only the patches where a dot moved
+        void WallTick()
+        {
+            Region r = StepWall();
+            if (r == null) { Invalidate(); return; }
+            Invalidate(r);
+            r.Dispose();
         }
 
         public App AppRef { get { return app; } }
@@ -98,20 +115,58 @@ namespace Fleet
                 {
                     lg.Clear(Color.Transparent);
                     lg.ScaleTransform(scale, scale);
+                    ui.Target = layer;
                     ui.BeginFrame(lg, w, h);
                     try { app.Render(ui); }
                     catch (Exception ex) { Log.Add("Draw error: " + ex.Message); }
                     keepFast = ui.NeedFrames;
                     keepMs = ui.NeedMs;
-                    Cursor = ui.WantHand ? Cursors.Hand : Cursors.Default;
+                    Cursor = ui.WantText ? Cursors.IBeam : (ui.WantHand ? Cursors.Hand : Cursors.Default);
                     ui.EndFrame();
                 }
             }
+            if (blurBmp == null || blurBmp.Width != Math.Max(2, Width / 4) || blurBmp.Height != Math.Max(2, Height / 4))
+            {
+                if (blurBmp != null) blurBmp.Dispose();
+                blurBmp = new Bitmap(Math.Max(2, Width / 4), Math.Max(2, Height / 4), System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
+            }
+            // wallpaper first (it respects whatever part of the window is being repainted)
             g.ResetTransform();
             g.ScaleTransform(scale, scale);
+            wallpaper.Mouse = ui.Mouse;
             wallpaper.Draw(g, w, h, ui.Time);
             g.ResetTransform();
-            g.DrawImageUnscaled(layer, 0, 0);
+            // panels are see-through: behind each one sits a blurred copy of the wallpaper
+            if (ui.GlassRects.Count > 0 && Store.Cfg.Wallpaper != "Off")
+            {
+                using (Graphics bg = Graphics.FromImage(blurBmp))
+                {
+                    bg.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                    bg.ScaleTransform(blurBmp.Width / (float)w, blurBmp.Height / (float)h);
+                    wallpaper.DrawBlurSource(bg, w, h);
+                }
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Bilinear;
+                foreach (Ui.GlassRect gr in ui.GlassRects.ToArray())
+                {
+                    if (!gr.R.IntersectsWith(g.ClipBounds)) continue;
+                    using (System.Drawing.Drawing2D.GraphicsPath p = Ui.Round(gr.R, gr.Rad))
+                    {
+                        System.Drawing.Drawing2D.GraphicsState st = g.Save();
+                        g.SetClip(p, System.Drawing.Drawing2D.CombineMode.Intersect);
+                        g.DrawImage(blurBmp, new Rectangle(0, 0, Width, Height));
+                        g.Restore(st);
+                    }
+                }
+            }
+            // the interface on top, only the repainted patches of it
+            RectangleF[] scans;
+            using (Region cr = g.Clip.Clone()) using (System.Drawing.Drawing2D.Matrix mx = new System.Drawing.Drawing2D.Matrix()) scans = cr.GetRegionScans(mx);
+            if (scans.Length > 400) scans = new RectangleF[] { g.ClipBounds };
+            foreach (RectangleF sr in scans)
+            {
+                Rectangle rr = Rectangle.Intersect(new Rectangle(0, 0, Width, Height), Rectangle.Ceiling(RectangleF.Inflate(sr, 1, 1)));
+                if (rr.Width > 0 && rr.Height > 0) g.DrawImage(layer, rr, rr.X, rr.Y, rr.Width, rr.Height, GraphicsUnit.Pixel);
+            }
             ImeUpdate();
             if (ui.ContextField != null) { string id = ui.ContextField; ui.ContextField = null; BeginInvoke((MethodInvoker)delegate { ShowFieldMenu(id); }); }
         }
@@ -127,8 +182,22 @@ namespace Fleet
             if (want) Native.PlaceIme(Handle, (int)ui.ImeAt.X, (int)ui.ImeAt.Y);
         }
 
+        // the form decides what the edges and the top bar do, so the canvas lets those clicks fall through
+        public bool InDragArea(Point px) { return app.InDragArea(new PointF(px.X / scale, px.Y / scale)); }
+
         protected override void WndProc(ref Message m)
         {
+            if (m.Msg == 0x84 && Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                Form f = FindForm();
+                if (f != null && f.FormBorderStyle != FormBorderStyle.None)
+                {
+                    int v = (int)(long)m.LParam;
+                    Point p = PointToClient(new Point((short)(v & 0xFFFF), (short)((v >> 16) & 0xFFFF)));
+                    bool edge = f.WindowState == FormWindowState.Normal && (p.X < 6 || p.Y < 6 || p.X >= Width - 6 || p.Y >= Height - 6);
+                    if (edge || InDragArea(p)) { m.Result = (IntPtr)(-1); return; }
+                }
+            }
             if (m.Msg == 0x10D && imeOn) ImeUpdate();     // a composition is starting
             base.WndProc(ref m);
         }
