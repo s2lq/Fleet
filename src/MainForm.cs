@@ -37,7 +37,7 @@ namespace Fleet
             menu.Items.Add(Lang.T("Stop all"), null, delegate { Engine.StopAll(); });
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add(Lang.T("Quit"), null, delegate { quitting = true; Close(); });
-            menu.BackColor = Pal.Panel; menu.ForeColor = Pal.Text;
+            Menus.Style(menu);
             tray = new NotifyIcon { Text = "Fleet", ContextMenuStrip = menu };
             try { tray.Icon = Icon ?? SystemIcons.Application; } catch (Exception) { tray.Icon = SystemIcons.Application; }
             tray.DoubleClick += delegate { ShowMain(); };
@@ -67,6 +67,7 @@ namespace Fleet
         public void ApplyShell()
         {
             tray.Visible = Store.Cfg.Tray;
+            Menus.Style(menu);
             MinimumSize = Store.Cfg.Compact ? new Size(820, 520) : new Size(Math.Min(1000, Screen.PrimaryScreen.WorkingArea.Width), Math.Min(640, Screen.PrimaryScreen.WorkingArea.Height));
             Unhot();
             if (Store.Cfg.Hotkeys && Environment.OSVersion.Platform == PlatformID.Win32NT)

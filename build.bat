@@ -9,7 +9,7 @@ if not exist "%CSC%" (
   exit /b 1
 )
 echo Building Fleet...
-"%CSC%" /nologo /target:winexe /optimize+ /debug- /out:Fleet.exe /win32icon:assets\app.ico /win32manifest:assets\app.manifest ^
+"%CSC%" /nologo /target:winexe /optimize+ /debug- /out:Fleet.exe /resource:CHANGELOG.md,Fleet.CHANGELOG.md /win32icon:assets\app.ico /win32manifest:assets\app.manifest ^
   /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Web.Extensions.dll /r:System.Net.Http.dll /r:System.Security.dll /r:System.Management.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll ^
   /recurse:src\*.cs
 if errorlevel 1 (

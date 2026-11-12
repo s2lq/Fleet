@@ -173,6 +173,8 @@ namespace Fleet
         public bool LayoutRename = false;
 
         public bool FirstRunDone = false;
+        public bool TourDone = false;
+        public string LastSeenVersion = "";
         public string StartupPreset = "";
         public int MacroLoops = 1;
         public List<string> Recent = new List<string>();

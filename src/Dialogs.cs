@@ -34,6 +34,7 @@ namespace Fleet
         {
             TextBox t = new TextBox { Left = x, Top = y, Width = w, Height = h, Text = text ?? "", Multiline = multi, BorderStyle = BorderStyle.FixedSingle, BackColor = Field, ForeColor = Pal.Text };
             if (multi) { t.ScrollBars = ScrollBars.Vertical; t.AcceptsReturn = true; }
+            t.HandleCreated += delegate { Native.ModernControl(t.Handle); };
             return t;
         }
 

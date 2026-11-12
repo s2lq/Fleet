@@ -42,6 +42,8 @@ namespace Fleet
         // Esc: closes the topmost window, true when there was one
         public bool CloseTopWindow()
         {
+            if (tourStep >= 0) { tourStep = -1; Store.Cfg.TourDone = true; Store.SaveSettings(); return true; }
+            if (news != null) { news = null; return true; }
             if (viewing != null) { CloseViewer(); return true; }
             if (detail != null) { detail = null; return true; }
             return false;

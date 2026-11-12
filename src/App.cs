@@ -35,6 +35,7 @@ namespace Fleet
         {
             Store.AutoBackup();
             Roblox.Warm();
+            if (Store.Cfg.FirstRunDone) CheckWhatsNew(); else Store.Cfg.LastSeenVersion = Program.Version;
             if (Store.Cfg.CheckUpdates) CheckUpdate();
             if (Store.Cfg.HealthAuto) HealthLater();
         }
@@ -67,7 +68,7 @@ namespace Fleet
         public void Render(Ui ui)
         {
             float topH = 76;
-            ui.Blocked = detail != null || viewing != null;
+            ui.Blocked = detail != null || viewing != null || news != null || tourStep >= 0;
             DrawTopBar(ui, topH);
             float cw = Math.Min(1200, ui.W - 64);
             RectangleF area = new RectangleF((ui.W - cw) / 2, topH + 8, cw, ui.H - topH - 20);
@@ -100,7 +101,10 @@ namespace Fleet
             if (detail != null) { ui.Blocked = viewing != null; DrawDetails(ui); }
             ui.Blocked = false;
             if (viewing != null) DrawViewer(ui);
-            DrawToasts(ui);
+            if (news != null) DrawWhatsNew(ui);
+            if (tourStep >= 0) DrawTour(ui);
+            else if (Store.Cfg.FirstRunDone && !Store.Cfg.TourDone && news == null) StartTour();
+            if (tourStep < 0) DrawToasts(ui);
             ui.Overlay();
         }
 
@@ -164,6 +168,7 @@ namespace Fleet
                 RectangleF cell = new RectangleF(x, bar.Y + 4, widths[i], 34);
                 bool over = ui.Over(cell);
                 if (over) ui.WantHand = true;
+                navRects[Pages[i]] = cell;
                 ui.TextIn(Pages[i], cell, f, i == cur ? Pal.Text : Pal.Mix(Pal.Muted, Pal.Text, over ? 0.7f : 0f), StringAlignment.Center);
                 if (ui.Pressed && over) ui.Active = "nav" + i;
                 if (ui.Released && ui.Active == "nav" + i) { ui.Active = null; if (over && i != cur) { Go(Pages[i]); ui.Set("page." + Pages[i], 0f); } }

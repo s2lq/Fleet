@@ -107,7 +107,7 @@ namespace Fleet
         }
     }
 
-    public class ScrollState { public float Pos, Target; }
+    public class ScrollState { public float Pos, Target, Moved = -10f; }
 
     public enum Btn { Primary, Ghost, Danger, Quiet }
 
@@ -548,17 +548,18 @@ namespace Fleet
 
         GraphicsState scrollState;
         RectangleF scrollView;
-        float scrollContent;
+        float scrollContent, scrollPos, dragGrab;
+        ScrollState scrollRef;
 
         public void BeginScroll(RectangleF view, float contentH, ScrollState s)
         {
             float max = Math.Max(0, contentH - view.Height);
-            if (Over(view) && Math.Abs(Wheel) > 0.1f) s.Target -= Wheel * 0.6f;
+            if (Over(view) && Math.Abs(Wheel) > 0.1f) { s.Target -= Wheel * 0.6f; s.Moved = Time; }
             s.Target = Math.Max(0, Math.Min(max, s.Target));
             s.Pos += (s.Target - s.Pos) * 0.3f;
-            if (Math.Abs(s.Target - s.Pos) > 0.3f) NeedFrames = true; else s.Pos = s.Target;
+            if (Math.Abs(s.Target - s.Pos) > 0.3f) { NeedFrames = true; s.Moved = Time; } else s.Pos = s.Target;
             scrollState = G.Save();
-            scrollView = view; scrollContent = contentH;
+            scrollView = view; scrollContent = contentH; scrollRef = s;
             G.SetClip(view, CombineMode.Intersect);
             G.TranslateTransform(0, -s.Pos);
             // mouse needs the scroll offset too or clicks land on the wrong card
@@ -566,19 +567,42 @@ namespace Fleet
             clipHit = view.Contains(Mouse);
             scrollPos = s.Pos;
         }
-        float scrollPos;
 
+        // a slim bar that fades in when you scroll or come near it, grows when hovered, and can be dragged
         public void EndScroll()
         {
             G.Restore(scrollState);
             local = Mouse; clipHit = true;
-            float max = scrollContent - scrollView.Height;
-            if (max > 1)
+            RectangleF v = scrollView;
+            float max = scrollContent - v.Height;
+            if (max <= 1 || scrollRef == null) return;
+            ScrollState s = scrollRef;
+            string id = "sb" + System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(s);
+            float trackY = v.Y + 6, trackH = v.Height - 12;
+            float th = Math.Max(40, trackH * v.Height / scrollContent);
+            float ty = trackY + (trackH - th) * (s.Pos / max);
+            RectangleF zone = new RectangleF(v.Right - 18, v.Y, 18, v.Height);
+            bool hot = !Blocked && zone.Contains(Mouse);
+            bool dragging = Active == id;
+            float grow = Anim(id + ".w", hot || dragging ? 1f : 0f, 0.3f);
+            float shown = Anim(id + ".v", (hot || dragging || Time - s.Moved < 1.1f) ? 1f : 0f, 0.14f);
+            if (hot) WantHand = true;
+            if (Pressed && hot && !Blocked)
             {
-                float th = Math.Max(30, scrollView.Height * scrollView.Height / scrollContent);
-                float ty = scrollView.Y + (scrollView.Height - th) * (scrollPos / max);
-                Fill(new RectangleF(scrollView.Right - 6, ty, 3, th), 1.5f, Pal.Tint(70));
+                RectangleF thumbHit = new RectangleF(v.Right - 18, ty - 2, 18, th + 4);
+                if (thumbHit.Contains(Mouse)) { Active = id; dragGrab = Mouse.Y - ty; dragging = true; }
+                else { s.Target = Math.Max(0, Math.Min(max, s.Target + (Mouse.Y < ty ? -1 : 1) * v.Height * 0.9f)); s.Moved = Time; }
             }
+            if (dragging && Down)
+            {
+                float frac = Math.Max(0, Math.Min(1, (Mouse.Y - dragGrab - trackY) / Math.Max(1, trackH - th)));
+                s.Target = s.Pos = frac * max; s.Moved = Time;
+                ty = trackY + (trackH - th) * frac;
+            }
+            if (shown < 0.02f) return;
+            float w = 4f + 3f * grow;
+            RectangleF bar = new RectangleF(v.Right - 8 - w, ty, w, th);
+            Fill(bar, w / 2, Pal.Tint((int)((70 + 90 * grow) * shown)));
         }
     }
 }

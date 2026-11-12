@@ -76,6 +76,15 @@ namespace Fleet
             return map;
         }
 
+        [DllImport("uxtheme.dll", CharSet = CharSet.Unicode)] static extern int SetWindowTheme(IntPtr h, string app, string ids);
+
+        // modern (dark or light) scrollbars and edges on a classic control
+        public static void ModernControl(IntPtr hwnd)
+        {
+            try { SetWindowTheme(hwnd, Pal.IsLight ? "Explorer" : "DarkMode_Explorer", null); }
+            catch (Exception) { }
+        }
+
         public static void DarkTitleBar(IntPtr hwnd)
         {
             try { int one = Pal.IsLight ? 0 : 1; DwmSetWindowAttribute(hwnd, 20, ref one, 4); }

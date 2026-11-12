@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.9.0
+
+- what's new window after an update, built from this changelog (also under settings > about)
+- a short first launch tour that lights up each page, with a skip button. replay it from settings > about
+- slimmer scrollbars that fade out, grow on hover and can be dragged
+- right click menus and multiline boxes follow the theme
+- discord-bot folder: a script that sets up the discord server (roles, channels, rules, release webhook)
+
+## 1.8.1
+
+- simpler layout page: windows fill the screen with no gaps and rearrange by themselves
+
 ## 1.8.0
 
 - launching is faster. every login ticket is fetched at the same time, clients can all start at the same moment (new start all at once switch, on by default), and one shared detector finds all their windows instead of every account polling on its own. less disk writing during a launch

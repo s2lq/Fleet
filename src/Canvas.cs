@@ -135,13 +135,14 @@ namespace Fleet
 
         void ShowFieldMenu(string id)
         {
-            ContextMenuStrip menu = new ContextMenuStrip { BackColor = Pal.Panel2, ForeColor = Pal.Text, ShowImageMargin = false };
+            ContextMenuStrip menu = new ContextMenuStrip();
             string[,] items = { { "Cut", "cut" }, { "Copy", "copy" }, { "Paste", "paste" }, { "Select all", "selectall" } };
             for (int i = 0; i < 4; i++)
             {
                 string cmd = items[i, 1];
                 menu.Items.Add(Lang.T(items[i, 0]), null, delegate { ui.Command(id, cmd); Redraw(); });
             }
+            Menus.Style(menu);
             menu.Closed += delegate { menu.Dispose(); };
             menu.Show(Cursor.Position);
         }
@@ -170,6 +171,7 @@ namespace Fleet
         protected override void OnKeyPress(KeyPressEventArgs e) { ui.Typed += e.KeyChar; Redraw(); base.OnKeyPress(e); }
         protected override void OnKeyDown(KeyEventArgs e)
         {
+            if (app.TourActive && app.TourKey(e.KeyCode)) { Redraw(); e.Handled = true; return; }
             ui.KeyHits.Add(e.KeyCode);
             if (e.Control && e.KeyCode >= Keys.D1 && e.KeyCode <= Keys.D9) app.Navigate((int)e.KeyCode - (int)Keys.D1);
             if (e.KeyCode == Keys.Escape && app.CloseTopWindow()) { Redraw(); e.Handled = true; return; }

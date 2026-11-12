@@ -374,7 +374,9 @@ namespace Fleet
             ui.Text("An independent Roblox multi-account launcher. Not affiliated with or endorsed by Roblox.", s.X + 112, s.Y + 62, Fonts.Body, Pal.Muted);
             if (ui.Button("ab.upd", new RectangleF(s.X + 28, s.Y + 120, 220, 42), "Check for updates", Btn.Primary, "refresh")) CheckUpdateNow();
             if (ui.Button("ab.log", new RectangleF(s.X + 260, s.Y + 120, 190, 42), "Open crash log", Btn.Ghost, null)) OpenCrashLog();
-            if (updateText.Length > 0) ui.Text(updateText, s.X + 464, s.Y + 132, Fonts.BodyB, Pal.Good);
+            if (ui.Button("ab.new", new RectangleF(s.X + 462, s.Y + 120, 150, 42), "What's new", Btn.Ghost, null)) ShowChanges();
+            if (ui.Button("ab.tour", new RectangleF(s.X + 624, s.Y + 120, 160, 42), "Replay the tour", Btn.Ghost, null)) StartTour();
+            if (updateText.Length > 0) ui.Text(updateText, s.X + 28, s.Y + 100, Fonts.BodyB, Pal.Good);
             bool au = Tog(ui, "ab.auto", "Install updates automatically", "Downloads, checks the SHA-256 and restarts.", s.X + 28, s.Y + 176, s.Width - 56, Store.Cfg.AutoInstall);
             if (au != Store.Cfg.AutoInstall) { Store.Cfg.AutoInstall = au; Store.SaveSettings(); }
 
