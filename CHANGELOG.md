@@ -3,8 +3,7 @@
 ## 1.8.0
 
 - launching is faster. every login ticket is fetched at the same time, clients can all start at the same moment (new start all at once switch, on by default), and one shared detector finds all their windows instead of every account polling on its own. less disk writing during a launch
-- windows arrange themselves smartly: the best grid for the screen shape, spread over all screens by size, and they rearrange when a window opens or closes
-- 40 built-in layouts and a layout editor to draw your own. presets remember their layout
+- windows arrange themselves: the best grid for the screen shape with no gaps, spread over all screens by size, and they rearrange when a window opens or closes
 - fixed a bug where double clicking a word in a text field only selected part of it
 
 ## 1.7.0

@@ -77,8 +77,7 @@ Close all Roblox windows before turning multi-instance on. The exe is not code-s
 - Shareable `.fcfg` configs that never contain accounts, cookies or servers
 
 **Windows and tools**
-- Smart window layout: a grid that fits the screen shape, spread over one or all screens, and it rearranges itself when a window opens or closes
-- 40 built-in layouts (grids, main plus side, corners, cascade and more) and your own: draw them on a preview and save them
+- Windows arrange themselves: a grid that fits the screen shape with no gaps, spread over one or all screens, and it rearranges itself when a window opens or closes
 - Presets that restore accounts, game and layout, optionally at startup
 - A scheduler: launch a preset or everyone, or stop everything, at set times and days
 - `fleet://launch/<preset>` links and command line options (`--launch-preset`, `--launch-all`, `--stop-all`), also handed to a running Fleet

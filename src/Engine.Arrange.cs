@@ -56,13 +56,14 @@ namespace Fleet
             if (vis.Count == 0) { if (log) Log.Add(Live.Count == 0 ? "No Roblox window to arrange." : "The Roblox windows are not visible yet."); return 0; }
             List<Screen> screens = TargetScreens();
             int[] counts = Spread(vis.Count, screens.Select(s => (double)s.WorkingArea.Width * s.WorkingArea.Height).ToArray());
-            int gap = Math.Max(0, Store.Cfg.LayoutGap), idx = 0;
+            const int gap = 0;      // windows sit edge to edge
+            int idx = 0;
             for (int k = 0; k < screens.Count; k++)
             {
                 int n = counts[k];
                 if (n == 0) continue;
                 Rectangle area = screens[k].WorkingArea;
-                List<RectangleF> slots = Layouts.SlotsFor(Store.Cfg.LayoutName, n, area.Width / (double)area.Height, Store.Cfg.LayoutCols);
+                List<RectangleF> slots = Layouts.Smart(n, area.Width / (double)area.Height);
                 for (int i = 0; i < n; i++, idx++)
                 {
                     RectangleF s = slots[Math.Min(i, slots.Count - 1)];

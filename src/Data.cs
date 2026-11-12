@@ -65,7 +65,6 @@ namespace Fleet
     {
         public string Name = "";
         public List<string> AccountIds = new List<string>();
-        public string Layout = "";
         public string Mode = "Game";
         public string Place = "";
         public string Job = "";
@@ -163,7 +162,6 @@ namespace Fleet
         public bool GameProxyEnv = false;
         public bool AutoInstall = false;
 
-        public string LayoutName = "Auto (smart grid)";
         public bool LayoutAllScreens = false;
         public bool AutoArrange = true;
         public bool LaunchAtOnce = true;
@@ -241,7 +239,6 @@ namespace Fleet
         public static List<Account> Accounts = new List<Account>();
         public static List<SavedServer> Servers = new List<SavedServer>();
         public static List<Preset> Presets = new List<Preset>();
-        public static List<LayoutDef> UserLayouts = new List<LayoutDef>();
         public static List<JournalEntry> Journal = new List<JournalEntry>();
         public static Settings Cfg = new Settings();
         public static string Password;
@@ -291,11 +288,9 @@ namespace Fleet
         static void LoadSide()
         {
             try { if (File.Exists(P("presets.json"))) Presets = js.Deserialize<List<Preset>>(File.ReadAllText(P("presets.json"), Encoding.UTF8)) ?? new List<Preset>(); } catch (Exception) { }
-            try { if (File.Exists(P("layouts.json"))) UserLayouts = js.Deserialize<List<LayoutDef>>(File.ReadAllText(P("layouts.json"), Encoding.UTF8)) ?? new List<LayoutDef>(); } catch (Exception) { }
             try { if (File.Exists(P("events.json"))) Journal = js.Deserialize<List<JournalEntry>>(File.ReadAllText(P("events.json"), Encoding.UTF8)) ?? new List<JournalEntry>(); } catch (Exception) { }
         }
 
-        public static void SaveLayouts() { try { Write(P("layouts.json"), Encoding.UTF8.GetBytes(js.Serialize(UserLayouts))); } catch (Exception) { } }
         public static void SavePresets() { try { Write(P("presets.json"), Encoding.UTF8.GetBytes(js.Serialize(Presets))); } catch (Exception) { } }
         public static void SaveJournal()
         {

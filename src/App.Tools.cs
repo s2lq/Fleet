@@ -30,7 +30,6 @@ namespace Fleet
             foreach (string id in p.AccountIds) if (Store.Find(id) != null) selected.Add(id);
             Settings c = Store.Cfg;
             c.LaunchMode = p.Mode; c.LastPlace = p.Place; c.LastJob = p.Job; c.LastPrivate = p.Private; c.LayoutCols = p.Cols; c.LayoutGap = p.Gap; c.OnlySelected = true;
-            if (!string.IsNullOrEmpty(p.Layout)) c.LayoutName = p.Layout;
             Store.SaveSettings();
         }
 
@@ -82,7 +81,7 @@ namespace Fleet
                 List<Account> src = selected.Count > 0 ? SelectedList() : Store.Accounts.ToList();
                 Settings c = Store.Cfg;
                 Store.Presets.RemoveAll(p => p.Name == name);
-                Store.Presets.Add(new Preset { Name = name, AccountIds = src.Select(s => s.Id).ToList(), Mode = c.LaunchMode, Place = c.LastPlace, Job = c.LastJob, Private = c.LastPrivate, Cols = c.LayoutCols, Gap = c.LayoutGap, Layout = c.LayoutName });
+                Store.Presets.Add(new Preset { Name = name, AccountIds = src.Select(s => s.Id).ToList(), Mode = c.LaunchMode, Place = c.LastPlace, Job = c.LastJob, Private = c.LastPrivate, Cols = c.LayoutCols, Gap = c.LayoutGap });
                 Store.SavePresets();
             });
         }
