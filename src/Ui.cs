@@ -108,7 +108,7 @@ namespace Fleet
         }
     }
 
-    public class ScrollState { public float Pos, Target, Moved = -10f; }
+    public class ScrollState { public float Pos, Target, Moved = -10f, Measured; public bool Auto; }
 
     public enum Btn { Primary, Ghost, Danger, Quiet }
 
@@ -234,13 +234,20 @@ namespace Fleet
             return p;
         }
 
+        // while a scroll view is open, remember how far down things were drawn, so the view always reaches the last one
+        bool tracking;
+        float trackMax;
+        void Track(float bottom) { if (tracking && bottom > trackMax && bottom < 30000f) trackMax = bottom; }
+
         public void Fill(RectangleF r, float rad, Color c)
         {
+            Track(r.Bottom);
             using (GraphicsPath p = Round(r, rad)) using (SolidBrush b = new SolidBrush(c)) G.FillPath(b, p);
         }
 
         public void Stroke(RectangleF r, float rad, Color c, float w)
         {
+            Track(r.Bottom);
             using (GraphicsPath p = Round(r, rad)) using (Pen pen = new Pen(c, w)) G.DrawPath(pen, p);
         }
 
@@ -318,6 +325,7 @@ namespace Fleet
         {
             s = Lang.T(s);
             if (string.IsNullOrEmpty(s)) return;
+            Track(y + f.Height);
             using (SolidBrush b = new SolidBrush(c)) G.DrawString(s, f, b, x, y, sf);
         }
 
@@ -325,6 +333,7 @@ namespace Fleet
         {
             s = Lang.T(s);
             if (string.IsNullOrEmpty(s)) return;
+            Track(r.Bottom);
             StringFormat fmt = new StringFormat(sf);
             fmt.Alignment = h; fmt.LineAlignment = StringAlignment.Center;
             using (SolidBrush b = new SolidBrush(c)) G.DrawString(s, f, b, r, fmt);
@@ -337,6 +346,7 @@ namespace Fleet
             StringFormat fmt = new StringFormat(StringFormat.GenericTypographic);
             fmt.Trimming = StringTrimming.Word;
             SizeF z = G.MeasureString(s, f, (int)r.Width, fmt);
+            Track(r.Y + z.Height);
             using (SolidBrush b = new SolidBrush(c)) G.DrawString(s, f, b, new RectangleF(r.X, r.Y, r.Width, z.Height + 2), fmt);
             fmt.Dispose();
             return (float)Math.Ceiling(z.Height);
@@ -600,6 +610,8 @@ namespace Fleet
 
         public void BeginScroll(RectangleF view, float contentH, ScrollState s)
         {
+            contentH = s.Auto && s.Measured > 0 ? s.Measured + 24f : Math.Max(contentH, s.Measured + 24f);
+            tracking = true; trackMax = 0f;
             float max = Math.Max(0, contentH - view.Height);
             if (Over(view) && Math.Abs(Wheel) > 0.1f) { s.Target -= Wheel * 0.6f; s.Moved = Time; }
             s.Target = Math.Max(0, Math.Min(max, s.Target));
@@ -618,6 +630,13 @@ namespace Fleet
         // a slim bar that fades in when you scroll or come near it, grows when hovered, and can be dragged
         public void EndScroll()
         {
+            if (tracking && scrollRef != null)
+            {
+                tracking = false;
+                float meas = trackMax - scrollView.Y;
+                if (Math.Abs(meas - scrollRef.Measured) > 1f) { scrollRef.Measured = meas; NeedFrames = true; }
+            }
+            tracking = false;
             G.Restore(scrollState);
             local = Mouse; clipHit = true;
             RectangleF v = scrollView;

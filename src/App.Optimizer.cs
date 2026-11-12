@@ -30,6 +30,7 @@ namespace Fleet
             if ((DateTime.UtcNow - optAt).TotalSeconds > 6 && !Optimizer.Running) OptRefresh();
             RectangleF view = new RectangleF(a.X - 8, a.Y + 80, a.Width + 16, a.Bottom - a.Y - 80);
             float contentH = 1010;
+            Scroll("opt").Auto = true;
             ui.BeginScroll(view, contentH, Scroll("opt"));
             RectangleF col = new RectangleF(a.X, view.Y + 4, a.Width, 0);
             float y = col.Y;

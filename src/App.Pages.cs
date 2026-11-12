@@ -13,6 +13,7 @@ namespace Fleet
         {
             Title(ui, a, "Performance", "Keep every Roblox window light on your PC.");
             RectangleF view = new RectangleF(a.X - 8, a.Y + 82, a.Width + 16, a.Height - 82);
+            Scroll("perf").Auto = true;
             ui.BeginScroll(view, 900, Scroll("perf"));
             float y = view.Y + 8;
             float lw = Math.Min(480, a.Width * 0.44f);

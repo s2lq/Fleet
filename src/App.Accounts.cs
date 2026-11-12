@@ -44,14 +44,18 @@ namespace Fleet
 
             float ty = a.Y + 86;
             float x = a.X;
-            RectangleF sb = new RectangleF(x, ty, 240, 42);
-            search = ui.TextField("acc.search", sb, search, "Search accounts");
+            // on narrow windows the search box and the pickers give up some width so nothing runs into the buttons on the right
+            float over = Math.Max(0, 240 + 10 + 160 + 150 + 150 - (a.Width - 336));
+            float sbw = Math.Max(130, 240 - over); over -= 240 - sbw;
+            float gw = Math.Max(104, 150 - over / 2), tw = Math.Max(96, 140 - over / 2);
+            RectangleF sb = new RectangleF(x, ty, sbw, 42);
+            search = ui.TextField("acc.search", sb, search, sbw < 200 ? "Search" : "Search accounts");
             ui.Icon("search", new RectangleF(sb.Right - 34, ty + 12, 18, 18), Pal.Faint, 1.6f);
             x = sb.Right + 10;
             string[] gi = new string[] { "All groups" }.Concat(groups).ToArray();
-            groupIdx = ui.Picker("acc.group", new RectangleF(x, ty, 150, 42), gi, groupIdx, "Group"); x += 160;
+            groupIdx = ui.Picker("acc.group", new RectangleF(x, ty, gw, 42), gi, groupIdx, "Group"); x += gw + 10;
             string[] ti = new string[] { "All tags" }.Concat(tags).ToArray();
-            tagIdx = ui.Picker("acc.tag", new RectangleF(x, ty, 140, 42), ti, tagIdx, "Tag"); x += 150;
+            tagIdx = ui.Picker("acc.tag", new RectangleF(x, ty, tw, 42), ti, tagIdx, "Tag"); x += tw + 10;
             viewIdx = ui.Segmented("acc.view", new RectangleF(x, ty, 150, 42), new string[] { "Cards", "List" }, viewIdx);
 
             float bx = a.Right;
@@ -65,18 +69,23 @@ namespace Fleet
             if (selected.Count > 0)
             {
                 float ax = a.X;
-                if (ui.Button("bk.go", new RectangleF(ax, by, 118, 38), "Launch", Btn.Primary, "play")) LaunchList(SelectedList()); ax += 126;
-                if (ui.Button("bk.stop", new RectangleF(ax, by, 96, 38), "Stop", Btn.Danger, "stop")) { foreach (Account s in SelectedList()) { Running r = Engine.Of(s); if (r != null) Engine.Kill(r); } } ax += 104;
+                bool tight = a.Width < 1100;
+                float[] bw = tight ? new float[] { 96, 78, 84, 80, 66, 80, 110, 130 } : new float[] { 118, 96, 104, 100, 90, 100, 128, 150 };
+                float limit = a.Right - 204;
+                if (ui.Button("bk.go", new RectangleF(ax, by, bw[0], 38), "Launch", Btn.Primary, "play")) LaunchList(SelectedList()); ax += bw[0] + 8;
+                if (ui.Button("bk.stop", new RectangleF(ax, by, bw[1], 38), "Stop", Btn.Danger, "stop")) { foreach (Account s in SelectedList()) { Running r = Engine.Of(s); if (r != null) Engine.Kill(r); } } ax += bw[1] + 8;
                 bool anyMuted = SelectedList().Any(s => s.Muted);
-                if (ui.Button("bk.mute", new RectangleF(ax, by, 104, 38), anyMuted ? "Unmute" : "Mute", Btn.Ghost, null)) MuteSelected(!anyMuted); ax += 112;
-                if (ui.Button("bk.check", new RectangleF(ax, by, 100, 38), "Check", Btn.Ghost, null)) foreach (Account s in SelectedList()) CheckOne(s); ax += 108;
-                if (ui.Button("bk.tag", new RectangleF(ax, by, 90, 38), "Tag", Btn.Ghost, null)) BulkText("Tag", "Tag to add to the selected accounts:", delegate(Account s, string v) { var l = s.TagList(); if (!l.Contains(v, StringComparer.OrdinalIgnoreCase)) l.Add(v); s.Tags = string.Join(",", l.ToArray()); }); ax += 98;
-                if (ui.Button("bk.grp", new RectangleF(ax, by, 100, 38), "Group", Btn.Ghost, null)) BulkText("Group", "Group for the selected accounts (empty = none):", delegate(Account s, string v) { s.Group = v; }); ax += 108;
+                if (ui.Button("bk.mute", new RectangleF(ax, by, bw[2], 38), anyMuted ? "Unmute" : "Mute", Btn.Ghost, null)) MuteSelected(!anyMuted); ax += bw[2] + 8;
+                if (ui.Button("bk.check", new RectangleF(ax, by, bw[3], 38), "Check", Btn.Ghost, null)) foreach (Account s in SelectedList()) CheckOne(s); ax += bw[3] + 8;
+                if (ui.Button("bk.tag", new RectangleF(ax, by, bw[4], 38), "Tag", Btn.Ghost, null)) BulkText("Tag", "Tag to add to the selected accounts:", delegate(Account s, string v) { var l = s.TagList(); if (!l.Contains(v, StringComparer.OrdinalIgnoreCase)) l.Add(v); s.Tags = string.Join(",", l.ToArray()); }); ax += bw[4] + 8;
+                if (ui.Button("bk.grp", new RectangleF(ax, by, bw[5], 38), "Group", Btn.Ghost, null)) BulkText("Group", "Group for the selected accounts (empty = none):", delegate(Account s, string v) { s.Group = v; }); ax += bw[5] + 8;
                 string[] cols = new string[] { "(no colour)" }.Concat(ColorNames).ToArray();
-                int ci = ui.Picker("bk.col", new RectangleF(ax, by, 128, 38), cols, -1, "Colour"); ax += 136;
+                int ci = -1;
+                if (ax + bw[6] <= limit) { ci = ui.Picker("bk.col", new RectangleF(ax, by, bw[6], 38), cols, -1, "Colour"); ax += bw[6] + 8; }
                 if (ci >= 0) { foreach (Account s in SelectedList()) s.Color = ci == 0 ? "" : ColorNames[ci - 1]; Store.SaveAccounts(); }
                 string[] sv = new string[] { "(no server)" }.Concat(Store.Servers.Select(q => q.Name)).ToArray();
-                int si = ui.Picker("bk.srv", new RectangleF(ax, by, 150, 38), sv, -1, "Private server"); ax += 158;
+                int si = -1;
+                if (ax + bw[7] <= limit) { si = ui.Picker("bk.srv", new RectangleF(ax, by, bw[7], 38), sv, -1, "Private server"); ax += bw[7] + 8; }
                 if (si >= 0) { foreach (Account s in SelectedList()) s.ServerId = si == 0 ? "" : Store.Servers[si - 1].Id; Store.SaveAccounts(); }
                 if (ui.Button("bk.rm", new RectangleF(a.Right - 100, by, 100, 38), "Remove", Btn.Danger, "trash")) RemoveSelected();
                 if (ui.Button("bk.clr", new RectangleF(a.Right - 196, by, 88, 38), "Clear", Btn.Ghost, null)) selected.Clear();

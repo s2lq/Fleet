@@ -29,6 +29,7 @@ namespace Fleet
         void DrawAccountTools(Ui ui, RectangleF a)
         {
             RectangleF view = new RectangleF(a.X - 8, a.Y + 82, a.Width + 16, a.Height - 82);
+            Scroll("acctools").Auto = true;
             ui.BeginScroll(view, 1400, Scroll("acctools"));
             float gap = 16, w = (a.Width - gap) / 2, y = view.Y + 8;
             List<Account> all = Store.Accounts.OrderBy(q => q.Order).ToList();
@@ -42,7 +43,7 @@ namespace Fleet
             float cw = (a.Width - 48) / 6;
             for (int i = 0; i < 6; i++)
             {
-                ui.Text(Lang.T(stats[i, 0]).ToUpper(), s.X + 24 + i * cw, s.Y + 56, Fonts.SmallB, Pal.Muted);
+                ui.Text(Ui.Fit(ui, Lang.T(stats[i, 0]).ToUpper(), Fonts.SmallB, cw - 12), s.X + 24 + i * cw, s.Y + 56, Fonts.SmallB, Pal.Muted);
                 ui.Text(stats[i, 1], s.X + 24 + i * cw, s.Y + 76, Fonts.Get(22, true), Pal.Text);
             }
             y += 136;

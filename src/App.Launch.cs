@@ -35,6 +35,7 @@ namespace Fleet
         {
             Title(ui, a, "Launch", "Choose where your accounts go, then start them.");
             RectangleF view = new RectangleF(a.X - 8, a.Y + 82, a.Width + 16, a.Height - 82);
+            Scroll("launch").Auto = true;
             ui.BeginScroll(view, 780, Scroll("launch"));
             float y = view.Y + 8;
             float lw = Math.Min(640, a.Width * 0.58f);

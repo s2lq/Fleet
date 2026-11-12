@@ -22,6 +22,7 @@ namespace Fleet
             RectangleF col = new RectangleF(a.X, view.Y + 8, Math.Min(a.Width, 860), 0);
             ScrollState sc = Scroll("settings" + setSub);
             float[] heights = { 1790, 840, 820, 780, 1500, 460 };
+            sc.Auto = true;
             ui.BeginScroll(view, heights[setSub], sc);
             switch (setSub)
             {
