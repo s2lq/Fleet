@@ -255,7 +255,7 @@ namespace Fleet
         public void Glass(RectangleF r, float rad, float lift)
         {
             rad = Math.Min(rad, 12);
-            Fill(r, rad, Pal.Mix(Pal.Panel, Pal.Panel2, lift));
+            Fill(r, rad, Pal.Alpha(Pal.Mix(Pal.Panel, Pal.Panel2, lift), 165));
             Stroke(r, rad, Pal.Mix(Pal.Line, Pal.Line2, lift), 1f);
         }
 
@@ -289,7 +289,7 @@ namespace Fleet
                 }
             }
             catch (Exception) { }
-            Fill(r, rad, tint);
+            Fill(r, rad, Pal.Alpha(tint, Math.Max(alpha, 225)));
         }
 
         void GlassOld(RectangleF r, float rad, float lift)

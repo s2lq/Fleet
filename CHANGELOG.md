@@ -7,6 +7,7 @@
 - slimmer scrollbars that fade out, grow on hover and can be dragged
 - right click menus and multiline boxes follow the theme
 - fleet draws its own title bar with its own minimize, maximize and close buttons. dialogs have one too
+- panels, popups and notifications are slightly see-through
 - startup animation, and a nicer first setup: pick a theme and accent with a preview, steps slide in, the tour waits until you finish adding accounts
 - smoother animations that run the same at any frame rate
 - text boxes show the text cursor instead of the hand
