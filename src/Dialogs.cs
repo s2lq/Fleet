@@ -7,7 +7,8 @@ namespace Fleet
 
     public static class Dialogs
     {
-        static readonly Color Back = Color.FromArgb(12, 12, 16), Field = Color.FromArgb(22, 23, 30);
+        static Color Back { get { return Pal.Bg; } }
+        static Color Field { get { return Pal.Panel2; } }
 
         static Form Make(string title, int w, int h)
         {

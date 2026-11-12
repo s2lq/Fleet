@@ -104,7 +104,7 @@ namespace Fleet
                 {
                     RectangleF row = new RectangleF(px, fy, pw, 32);
                     bool over = ui.Over(row);
-                    if (over) { ui.WantHand = true; ui.Fill(row, 8, Color.FromArgb(18, 255, 255, 255)); }
+                    if (over) { ui.WantHand = true; ui.Fill(row, 8, Pal.Tint(18)); }
                     ui.Text(Ui.Fit(ui, h.Name, Fonts.Body, pw - 150), px + 10, fy + 6, Fonts.Body, Pal.Text);
                     ui.Text(h.Players.ToString("N0") + " playing", px + pw - 110, fy + 8, Fonts.Small, Pal.Muted);
                     if (ui.Pressed && over) ui.Active = "gh" + h.Place;
@@ -141,7 +141,7 @@ namespace Fleet
 
             float by = y + 494;
             bool busy = Engine.Busy;
-            if (busy) ui.Spinner(new RectangleF(a.X + 16, by + 17, 18, 18), Color.Black);
+            if (busy) ui.Spinner(new RectangleF(a.X + 16, by + 17, 18, 18), Pal.OnAccent);
             if (ui.Button("ln.go", new RectangleF(a.X, by, 240, 52), busy ? Engine.BusyText : "Launch", Btn.Primary, busy ? null : "play") && !busy)
             {
                 Store.SaveSettings();

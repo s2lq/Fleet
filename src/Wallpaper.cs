@@ -32,7 +32,7 @@ namespace Fleet
                 // wrap around the top
                 float y = ((d.Y - d.Speed * t) % 1f + 1f) % 1f;
                 float tw = 0.5f + 0.5f * (float)Math.Sin(t * 0.9 + d.Phase);
-                using (SolidBrush b = new SolidBrush(Color.FromArgb((int)(20 + 55 * tw), 255, 255, 255)))
+                using (SolidBrush b = new SolidBrush(Pal.Tint((int)(20 + 55 * tw))))
                     g.FillEllipse(b, d.X * w - d.R, y * h - d.R, d.R * 2, d.R * 2);
             }
         }
@@ -41,11 +41,11 @@ namespace Fleet
         {
             float horizon = h * 0.42f;
             float vx = w / 2f;
-            using (Pen pen = new Pen(Color.White, 1f))
+            using (Pen pen = new Pen(Pal.Text, 1f))
             {
                 for (int i = -18; i <= 18; i++)
                 {
-                    pen.Color = Color.FromArgb(22, 255, 255, 255);
+                    pen.Color = Pal.Tint(22);
                     g.DrawLine(pen, vx + i * 12, horizon, vx + i * w * 0.18f, h);
                 }
                 float phase = (t * 0.18f) % 1f;
@@ -53,13 +53,13 @@ namespace Fleet
                 {
                     float z = (k + phase) / 14f;
                     float y = horizon + (h - horizon) * z * z;
-                    pen.Color = Color.FromArgb((int)(40 * z), 255, 255, 255);
+                    pen.Color = Pal.Tint((int)(40 * z));
                     g.DrawLine(pen, 0, y, w, y);
                 }
             }
-            using (System.Drawing.Drawing2D.LinearGradientBrush fade = new System.Drawing.Drawing2D.LinearGradientBrush(new RectangleF(0, horizon - 1, w, 120), Color.Black, Color.FromArgb(0, 0, 0), 90f))
+            using (System.Drawing.Drawing2D.LinearGradientBrush fade = new System.Drawing.Drawing2D.LinearGradientBrush(new RectangleF(0, horizon - 1, w, 120), Pal.Bg, Color.FromArgb(0, Pal.Bg.R, Pal.Bg.G, Pal.Bg.B), 90f))
                 g.FillRectangle(fade, 0, horizon - 1, w, 120);
-            using (SolidBrush top = new SolidBrush(Color.Black)) g.FillRectangle(top, 0, 0, w, horizon);
+            using (SolidBrush top = new SolidBrush(Pal.Bg)) g.FillRectangle(top, 0, 0, w, horizon);
         }
     }
 }

@@ -124,8 +124,8 @@ namespace Fleet
                 bool over = ui.Over(sw);
                 if (over) ui.WantHand = true;
                 float grow = ui.Anim("sw" + i, over ? 1f : 0f, 0.3f);
-                ui.Fill(new RectangleF(sw.X - grow * 2, sw.Y - grow * 2, sw.Width + grow * 4, sw.Height + grow * 4), 20, Pal.Accents[i].A);
-                if (c.Accent == i) using (Pen pen = new Pen(Color.White, 2f)) ui.G.DrawEllipse(pen, sw.X - 4, sw.Y - 4, sw.Width + 8, sw.Height + 8);
+                ui.Fill(new RectangleF(sw.X - grow * 2, sw.Y - grow * 2, sw.Width + grow * 4, sw.Height + grow * 4), 20, i == 0 ? Pal.Text : Pal.Accents[i].A);
+                if (c.Accent == i) using (Pen pen = new Pen(Pal.Text, 2f)) ui.G.DrawEllipse(pen, sw.X - 4, sw.Y - 4, sw.Width + 8, sw.Height + 8);
                 if (ui.Pressed && over) ui.Active = "sw" + i;
                 if (ui.Released && ui.Active == "sw" + i) { ui.Active = null; if (over) { c.Accent = i; Save(); } }
             }

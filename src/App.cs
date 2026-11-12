@@ -117,7 +117,7 @@ namespace Fleet
                 float x = ui.W - 24 - w + (1f - ease) * (w + 30) + outt * (w + 30);
                 float y = ui.H - 24 - h - i * 54;
                 RectangleF r = new RectangleF(x, y, w, h);
-                ui.Fill(new RectangleF(r.X - 1, r.Y - 1, r.Width + 2, r.Height + 2), 12, Color.Black);
+                ui.Fill(new RectangleF(r.X - 1, r.Y - 1, r.Width + 2, r.Height + 2), 12, Pal.Line);
                 ui.Fill(r, 11, Pal.Panel2);
                 ui.Stroke(r, 11, Pal.Line2, 1f);
                 ui.Fill(new RectangleF(r.X + 10, r.Y + 12, 3, r.Height - 24), 1.5f, t.Tint);

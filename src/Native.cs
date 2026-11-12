@@ -53,7 +53,7 @@ namespace Fleet
 
         public static void DarkTitleBar(IntPtr hwnd)
         {
-            try { int one = 1; DwmSetWindowAttribute(hwnd, 20, ref one, 4); }
+            try { int one = Pal.IsLight ? 0 : 1; DwmSetWindowAttribute(hwnd, 20, ref one, 4); }
             catch (Exception) { }
         }
     }

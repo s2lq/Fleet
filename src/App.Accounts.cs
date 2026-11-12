@@ -136,8 +136,8 @@ namespace Fleet
             bool sel = selected.Contains(a.Id);
             bool over = ui.Over(cb);
             if (over) ui.WantHand = true;
-            if (sel) { ui.Fill(cb, 11, Pal.A); ui.Icon("check", new RectangleF(cb.X + 3, cb.Y + 3, 16, 16), Color.Black, 2f); }
-            else ui.Stroke(cb, 11, Color.FromArgb(over ? 160 : 90, 255, 255, 255), 1.4f);
+            if (sel) { ui.Fill(cb, 11, Pal.A); ui.Icon("check", new RectangleF(cb.X + 3, cb.Y + 3, 16, 16), Pal.OnAccent, 2f); }
+            else ui.Stroke(cb, 11, Pal.Tint(over ? 160 : 90), 1.4f);
             if (ui.Pressed && over) ui.Active = "sel" + a.Id;
             if (ui.Released && ui.Active == "sel" + a.Id) { ui.Active = null; if (over) { if (sel) selected.Remove(a.Id); else selected.Add(a.Id); } }
             return sel;

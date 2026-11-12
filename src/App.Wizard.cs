@@ -18,7 +18,7 @@ namespace Fleet
             float w = Math.Min(640, ui.W - 40), h = 470;
             float enter = ui.Appear("wiz" + wizStep, 0);
             RectangleF card = new RectangleF((ui.W - w) / 2, Math.Max(90, (ui.H - h) / 2) + (1f - enter) * 24f, w, h);
-            ui.Fill(new RectangleF(0, 76, ui.W, ui.H - 76), 0, Color.FromArgb(150, 0, 0, 0));
+            ui.Fill(new RectangleF(0, 76, ui.W, ui.H - 76), 0, Color.FromArgb(150, Pal.Bg.R, Pal.Bg.G, Pal.Bg.B));
             ui.Glass(card, 18, 0);
             float x = card.X + 36, cw = card.Width - 72, y = card.Y + 32;
             ui.Text(Lang.F("Step {0} of 4", wizStep + 1), x, y, Fonts.SmallB, Pal.Muted);

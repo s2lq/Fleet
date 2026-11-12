@@ -18,14 +18,19 @@ namespace Fleet
         public static Color Text = Color.FromArgb(240, 240, 240);
         public static Color Muted = Color.FromArgb(150, 150, 150);
         public static Color Faint = Color.FromArgb(94, 94, 94);
-        public static readonly Color Good = Color.FromArgb(52, 211, 153);
-        public static readonly Color Bad = Color.FromArgb(248, 113, 113);
-        public static readonly Color Warn = Color.FromArgb(251, 191, 36);
+        public static Color Good = Color.FromArgb(52, 211, 153);
+        public static Color Bad = Color.FromArgb(248, 113, 113);
+        public static Color Warn = Color.FromArgb(251, 191, 36);
+        public static bool IsLight;
+        public static Color Tint(int a) { return Color.FromArgb(Math.Max(0, Math.Min(255, a)), Text.R, Text.G, Text.B); }
+        static float Lum(Color c) { return (0.299f * c.R + 0.587f * c.G + 0.114f * c.B) / 255f; }
+        public static bool LightColor(Color c) { return Lum(c) > 0.6f; }
+        public static Color OnAccent { get { return LightColor(A) ? Color.FromArgb(8, 8, 8) : Color.White; } }
 
         public class AccentDef { public string Name; public Color A, B; }
         public static readonly AccentDef[] Accents = new AccentDef[]
         {
-            Def("White",  235, 235, 235),
+            Def("Auto",   235, 235, 235),
             Def("Blue",   90, 150, 255),
             Def("Green",  74, 210, 130),
             Def("Red",    240, 90, 90),
@@ -34,8 +39,8 @@ namespace Fleet
         };
         static AccentDef Def(string n, int r, int g, int b) { Color c = Color.FromArgb(r, g, b); return new AccentDef { Name = n, A = c, B = c }; }
         public static AccentDef Cur { get { return Accents[Math.Max(0, Math.Min(Accents.Length - 1, Store.Cfg.Accent))]; } }
-        public static Color A { get { return Cur.A; } }
-        public static Color B { get { return Cur.B; } }
+        public static Color A { get { return Store.Cfg.Accent == 0 ? Text : Cur.A; } }
+        public static Color B { get { return A; } }
         public static Color Alpha(Color c, int a) { return Color.FromArgb(Math.Max(0, Math.Min(255, a)), c.R, c.G, c.B); }
         public static Color Mix(Color a, Color b, float t)
         {
@@ -210,13 +215,13 @@ namespace Fleet
 
         void GlassOld(RectangleF r, float rad, float lift)
         {
-            Fill(r, rad, Color.FromArgb((int)(11 + lift * 12), 255, 255, 255));
-            Stroke(r, rad, Color.FromArgb((int)(24 + lift * 22), 255, 255, 255), 1f);
+            Fill(r, rad, Pal.Tint((int)(11 + lift * 12)));
+            Stroke(r, rad, Pal.Tint((int)(24 + lift * 22)), 1f);
             RectangleF hl = new RectangleF(r.X + rad, r.Y + 0.5f, Math.Max(1, r.Width - rad * 2), 1);
-            using (LinearGradientBrush br = new LinearGradientBrush(hl, Color.FromArgb(0, 255, 255, 255), Color.FromArgb(46, 255, 255, 255), 0f))
+            using (LinearGradientBrush br = new LinearGradientBrush(hl, Pal.Tint(0), Pal.Tint(46), 0f))
             {
                 ColorBlend cb = new ColorBlend(3);
-                cb.Colors = new Color[] { Color.FromArgb(0, 255, 255, 255), Color.FromArgb(54, 255, 255, 255), Color.FromArgb(0, 255, 255, 255) };
+                cb.Colors = new Color[] { Pal.Tint(0), Pal.Tint(54), Pal.Tint(0) };
                 cb.Positions = new float[] { 0, 0.5f, 1 };
                 br.InterpolationColors = cb;
                 G.FillRectangle(br, hl);
@@ -301,12 +306,12 @@ namespace Fleet
 
         public void Logo(RectangleF r)
         {
-            Fill(r, r.Width * 0.22f, Color.FromArgb(240, 240, 240));
+            Fill(r, r.Width * 0.22f, Pal.Text);
             float s = r.Width;
             float[,] p = { { .30f, .22f }, { .72f, .22f }, { .72f, .34f }, { .43f, .34f }, { .43f, .47f }, { .66f, .47f }, { .66f, .58f }, { .43f, .58f }, { .43f, .78f }, { .30f, .78f } };
             PointF[] v = new PointF[10];
             for (int i = 0; i < 10; i++) v[i] = new PointF(r.X + s * p[i, 0], r.Y + s * p[i, 1]);
-            using (SolidBrush b = new SolidBrush(Color.Black)) G.FillPolygon(b, v);
+            using (SolidBrush b = new SolidBrush(Pal.Bg)) G.FillPolygon(b, v);
         }
 
         public bool Button(string id, RectangleF r, string label, Btn style, string icon)
@@ -321,8 +326,8 @@ namespace Fleet
             switch (style)
             {
                 case Btn.Primary:
-                    Fill(rr, 8, Pal.Mix(Pal.A, Color.White, h * 0.22f));
-                    fg = Pal.Panel;
+                    Fill(rr, 8, Pal.Mix(Pal.A, Pal.IsLight ? Color.Black : Color.White, h * 0.22f));
+                    fg = Pal.OnAccent;
                     break;
                 case Btn.Danger:
                     Fill(rr, 8, Color.FromArgb((int)(14 + h * 26), Pal.Bad.R, Pal.Bad.G, Pal.Bad.B));
@@ -330,7 +335,7 @@ namespace Fleet
                     fg = Pal.Bad;
                     break;
                 case Btn.Quiet:
-                    if (h > 0.01f) Fill(rr, 8, Color.FromArgb((int)(h * 22), 255, 255, 255));
+                    if (h > 0.01f) Fill(rr, 8, Pal.Tint((int)(h * 22)));
                     fg = Pal.Mix(Pal.Muted, Pal.Text, h);
                     break;
                 default:
@@ -394,7 +399,7 @@ namespace Fleet
             float t = max > min ? (value - min) / (float)(max - min) : 0;
             float ty = r.Y + r.Height / 2;
             RectangleF track = new RectangleF(r.X, ty - 2.5f, r.Width, 5);
-            Fill(track, 2.5f, Color.FromArgb(36, 255, 255, 255));
+            Fill(track, 2.5f, Pal.Tint(36));
             if (t > 0.001f) Gradient(new RectangleF(r.X, ty - 2.5f, r.Width * t, 5), 2.5f, Pal.A, Pal.B, 0f);
             bool over = Over(r);
             if (over) WantHand = true;
@@ -483,9 +488,9 @@ namespace Fleet
             {
                 using (GraphicsPath p = new GraphicsPath()) { p.AddEllipse(r); using (SolidBrush br = new SolidBrush(Pal.Line)) G.FillPath(br, p); }
                 string ini = string.IsNullOrEmpty(a.Label) ? "?" : a.Label.Substring(0, 1).ToUpper();
-                TextIn(ini, r, Fonts.Get(r.Width * 0.42f, true), Color.FromArgb(200, 200, 200), StringAlignment.Center);
+                TextIn(ini, r, Fonts.Get(r.Width * 0.42f, true), Pal.Muted, StringAlignment.Center);
             }
-            using (Pen p = new Pen(Color.FromArgb(40, 255, 255, 255), 1f)) G.DrawEllipse(p, r);
+            using (Pen p = new Pen(Pal.Tint(40), 1f)) G.DrawEllipse(p, r);
         }
 
         // ------------------------------------------------------------ drop-down list
@@ -527,7 +532,7 @@ namespace Fleet
             float open = Anim("pick.open", 1f, 0.3f);
             GraphicsState gs = G.Save();
             G.SetClip(new RectangleF(pickBox.X - 3, pickBox.Y - 3, pickBox.Width + 6, (pickBox.Height + 6) * open));
-            Fill(new RectangleF(pickBox.X - 1, pickBox.Y - 1, pickBox.Width + 2, pickBox.Height + 2), 10, Color.Black);
+            Fill(new RectangleF(pickBox.X - 1, pickBox.Y - 1, pickBox.Width + 2, pickBox.Height + 2), 10, Pal.Line);
             Fill(pickBox, 9, Pal.Panel2);
             Stroke(pickBox, 9, Pal.Line2, 1f);
             if (pickBox.Contains(Mouse) && Math.Abs(Wheel) > 0.1f) pickScroll = Math.Max(0, Math.Min(Math.Max(0, pickItems.Length - rows), pickScroll - Wheel / 120f));
@@ -536,7 +541,7 @@ namespace Fleet
             {
                 RectangleF row = new RectangleF(pickBox.X + 4, pickBox.Y + 4 + i * rh, pickBox.Width - 8, rh);
                 bool hot = row.Contains(Mouse);
-                if (hot) { Fill(row, 7, Color.FromArgb(24, 255, 255, 255)); WantHand = true; }
+                if (hot) { Fill(row, 7, Pal.Tint(24)); WantHand = true; }
                 TextIn(Fit(this, Lang.T(pickItems[first + i]), Fonts.Body, row.Width - 20), new RectangleF(row.X + 10, row.Y, row.Width - 20, row.Height), Fonts.Body, Pal.Text, StringAlignment.Near);
                 if (Pressed && hot) { pickResult = first + i; pickResultId = pickId; }
             }
@@ -576,7 +581,7 @@ namespace Fleet
             {
                 float th = Math.Max(30, scrollView.Height * scrollView.Height / scrollContent);
                 float ty = scrollView.Y + (scrollView.Height - th) * (scrollPos / max);
-                Fill(new RectangleF(scrollView.Right - 6, ty, 3, th), 1.5f, Color.FromArgb(70, 255, 255, 255));
+                Fill(new RectangleF(scrollView.Right - 6, ty, 3, th), 1.5f, Pal.Tint(70));
             }
         }
     }
