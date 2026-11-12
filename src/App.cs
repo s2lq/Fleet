@@ -239,6 +239,18 @@ namespace Fleet
             return t;
         }
 
+        // launch these accounts into one game, whatever their own settings say
+        public void LaunchTo(List<Account> list, Target t)
+        {
+            foreach (Account a in list) Engine.BreakerClear(a);
+            canvas.Post(async delegate
+            {
+                Engine.ForceShared = true;
+                try { await Engine.LaunchMany(list, t); }
+                finally { Engine.ForceShared = false; }
+            });
+        }
+
         public void LaunchList(List<Account> list)
         {
             Target t = BuildTarget();

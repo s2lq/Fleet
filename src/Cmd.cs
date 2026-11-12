@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
@@ -20,6 +21,12 @@ namespace Fleet
                 string a = args[i];
                 if (a.StartsWith("fleet://", StringComparison.OrdinalIgnoreCase)) return a;
                 if (a == "--launch-preset" && i + 1 < args.Length) return "launch-preset:" + args[i + 1];
+                if (a == "--launch" && i + 1 < args.Length)
+                {
+                    string place = "";
+                    for (int j = 0; j + 1 < args.Length; j++) if (args[j] == "--place") place = args[j + 1];
+                    return "launch:" + args[i + 1] + "|" + place;
+                }
                 if (a == "--launch-all") return "launch-all";
                 if (a == "--stop-all") return "stop-all";
             }
@@ -74,7 +81,14 @@ namespace Fleet
             if (line.StartsWith("fleet://", StringComparison.OrdinalIgnoreCase))
             {
                 string rest = Uri.UnescapeDataString(line.Substring(8)).Trim('/');
-                if (rest.StartsWith("launch/", StringComparison.OrdinalIgnoreCase)) line = "launch-preset:" + rest.Substring(7);
+                if (rest.StartsWith("launch-account/", StringComparison.OrdinalIgnoreCase))
+                {
+                    string r2 = rest.Substring(15), pl = "";
+                    int q = r2.IndexOf("?place=", StringComparison.OrdinalIgnoreCase);
+                    if (q >= 0) { pl = r2.Substring(q + 7); r2 = r2.Substring(0, q); }
+                    line = "launch:" + r2 + "|" + pl;
+                }
+                else if (rest.StartsWith("launch/", StringComparison.OrdinalIgnoreCase)) line = "launch-preset:" + rest.Substring(7);
                 else if (rest.Equals("launchall", StringComparison.OrdinalIgnoreCase)) line = "launch-all";
                 else if (rest.Equals("stopall", StringComparison.OrdinalIgnoreCase)) line = "stop-all";
                 else line = "show";
@@ -82,6 +96,21 @@ namespace Fleet
             if (line == "show") f.ShowMain();
             else if (line == "launch-all") app.LaunchAllNow();
             else if (line == "stop-all") Engine.StopAll();
+            else if (line.StartsWith("launch:"))
+            {
+                string[] parts = line.Substring(7).Split('|');
+                List<Account> list = new List<Account>();
+                foreach (string raw in parts[0].Split(','))
+                {
+                    string n = raw.Trim();
+                    if (n.Length == 0) continue;
+                    Account a = Store.Accounts.FirstOrDefault(x => n.Equals(x.Name, StringComparison.OrdinalIgnoreCase) || n.Equals(x.Alias, StringComparison.OrdinalIgnoreCase) || n.Equals(x.Display, StringComparison.OrdinalIgnoreCase));
+                    if (a != null) list.Add(a); else Log.Add("No account called " + n + ".");
+                }
+                if (list.Count == 0) return;
+                long place = parts.Length > 1 ? Roblox.ParsePlace(parts[1]) : 0;
+                if (place > 0) app.LaunchTo(list, new Target { Mode = "Game", Place = place }); else app.LaunchList(list);
+            }
             else if (line.StartsWith("launch-preset:"))
             {
                 string name = line.Substring(14).Trim();

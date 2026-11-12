@@ -4,6 +4,7 @@
 
 - layout rewritten: windows tile the screen exactly with nothing overlapping. rows are balanced instead of one wide leftover, the invisible window border windows has is measured so neighbours do not overlap, and there is no minimum size forced any more (windows are asked for the exact slot and only if roblox refuses is its smallest size remembered and the layout redone, spilling extra windows to other screens)
 - every page can be scrolled all the way down now, and the accounts toolbar and tools tabs no longer run into each other on small windows
+- command line: Fleet.exe --launch "name" [--place id] launches one or more accounts (fleet://launch-account/name?place=id works too), and --help lists everything
 - tools > optimizer: swaps roblox's cursor for the normal windows pointer, replaces the font, turns the menu / emote wheel / top bar pictures black and white, and cleans old roblox versions, logs and cache. everything it changes is backed up and can be restored, and it can re-apply itself after roblox updates
 - finds roblox when it is installed in program files, and the version list now includes the current version
 - what's new window after an update, built from this changelog (also under settings > about)

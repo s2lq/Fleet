@@ -24,6 +24,12 @@ namespace Fleet
 
             if (Array.IndexOf(args, "--memclean") >= 0) { MemClean.Clean(); return; }
 
+            foreach (string a in args)
+                if (a == "--help" || a == "-h" || a == "/?")
+                {
+                    MessageBox.Show("Fleet.exe [options]\n\n--launch NAME[,NAME]   launch these accounts (name, alias or display name)\n--place ID             with --launch: the game to join\n--launch-preset NAME   run a saved preset\n--launch-all           launch every account\n--stop-all             close every Roblox window\n--min                  start minimized\n\nLinks: fleet://launch-account/NAME?place=ID, fleet://launch/PRESET, fleet://launchall, fleet://stopall\n\nIf Fleet is already running, the command goes to it.", "Fleet");
+                    return;
+                }
             string cmd = Cmd.FromArgs(args);
             bool created;
             single = new Mutex(true, "Fleet_SingleInstance", out created);

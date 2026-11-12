@@ -75,6 +75,8 @@ namespace Fleet
 
         static string robloxCache; static DateTime robloxCacheAt = DateTime.MinValue;
 
+        public static bool ForceShared;
+
         public static void ForgetRoblox() { robloxCache = null; }
 
         public static string FindRoblox()
@@ -138,7 +140,7 @@ namespace Fleet
 
         public static Target TargetFor(Account a, Target shared)
         {
-            if (!Store.Cfg.UseOwn) return shared;
+            if (!Store.Cfg.UseOwn || ForceShared) return shared;
             SavedServer sv = Store.FindServer(a.ServerId);
             if (sv != null && sv.Place > 0 && sv.Code.Length > 0) return new Target { Mode = "Private", Place = sv.Place, LinkCode = sv.Code };
             long own = Roblox.ParsePlace(a.Place);
