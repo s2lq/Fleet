@@ -222,7 +222,9 @@ namespace Fleet
     public class AvatarView : IDisposable
     {
         public readonly int W = 480, H = 580;
-        public volatile Mesh Model;
+        Mesh model;
+        public volatile bool Dirty = true;
+        public Mesh Model { get { return model; } set { model = value; Dirty = true; } }
         public float Yaw, Pitch, Zoom = 1f;
         public bool Auto = true;
         volatile Bitmap frame;
@@ -241,8 +243,9 @@ namespace Fleet
             while (!stop)
             {
                 Mesh m = Model;
-                if (m != null)
+                if (m != null && (Auto || Dirty))
                 {
+                    Dirty = false;
                     DateTime now = DateTime.UtcNow;
                     if (Auto) Yaw += (float)(now - last).TotalSeconds * 0.6f;
                     last = now;
@@ -254,7 +257,7 @@ namespace Fleet
                     Bitmap old = frame; frame = b;
                     if (old != null) old.Dispose();
                 }
-                Thread.Sleep(24);
+                Thread.Sleep(Auto ? 45 : 120);
             }
             Bitmap f = frame; frame = null; if (f != null) f.Dispose();
         }

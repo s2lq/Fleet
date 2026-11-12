@@ -23,7 +23,7 @@ namespace Fleet
             RectangleF view = new RectangleF(a.X - 8, a.Y + 82, a.Width + 16, a.Height - 82);
             RectangleF col = new RectangleF(a.X, view.Y + 8, Math.Min(a.Width, 860), 0);
             ScrollState sc = Scroll("settings" + setSub);
-            float[] heights = { 1650, 700, 820, 700, 760, 260 };
+            float[] heights = { 1650, 840, 820, 700, 760, 260 };
             ui.BeginScroll(view, heights[setSub], sc);
             switch (setSub)
             {
@@ -99,7 +99,7 @@ namespace Fleet
         void SetAppearance(Ui ui, RectangleF col)
         {
             Settings c = Store.Cfg;
-            RectangleF s = Sect(ui, col, col.Y, 640, "Appearance");
+            RectangleF s = Sect(ui, col, col.Y, 780, "Appearance");
             float x = s.X + 28, w = s.Width - 56, ry = s.Y + 62;
 
             Label(ui, "Theme", x, ry);
@@ -144,6 +144,12 @@ namespace Fleet
             int nwi = ui.Segmented("a.wp", new RectangleF(x, ry + 22, 360, 42), wp, wi);
             if (nwi != wi) { c.Wallpaper = wp[nwi]; Save(); }
             ry += 84;
+            Label(ui, "Animation", x, ry);
+            int mo = ui.Segmented("a.motion", new RectangleF(x, ry + 22, 380, 42), new string[] { "Efficient", "Smooth", "Minimal" }, c.Motion);
+            if (mo != c.Motion) { c.Motion = mo; Save(); }
+            ui.Text(c.Motion == 0 ? "Low CPU: the wallpaper moves slowly and everything pauses when Fleet is in the background." : (c.Motion == 1 ? "Smoother motion, a little more CPU." : "Quick transitions only, no wallpaper movement."), x, ry + 70, Fonts.Small, Pal.Faint);
+            ry += 98;
+            bool ps = Tog(ui, "a.ps", "Save power on battery", "Stops the wallpaper and pulses while unplugged.", x, ry, w, c.PowerSave); if (ps != c.PowerSave) { c.PowerSave = ps; Save(); } ry += 56;
             bool rm = Tog(ui, "a.rm", "Reduce motion", "Keeps the wallpaper still.", x, ry, w, c.ReduceMotion); if (rm != c.ReduceMotion) { c.ReduceMotion = rm; Save(); } ry += 56;
 
             Label(ui, "Language", x, ry);

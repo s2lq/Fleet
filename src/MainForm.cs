@@ -178,8 +178,8 @@ namespace Fleet
         {
             app = a; host = h;
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
-            timer.Interval = 250;
-            timer.Tick += delegate { Invalidate(); };
+            timer.Interval = 1000;
+            timer.Tick += delegate { if (Visible) Invalidate(); };
             timer.Start();
         }
 

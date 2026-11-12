@@ -81,6 +81,8 @@ namespace Fleet
         public List<CustomTheme> CustomThemes = new List<CustomTheme>();
         public string Wallpaper = "Dots";
         public bool ReduceMotion = false;
+        public int Motion = 0;                  // 0 efficient, 1 smooth, 2 minimal
+        public bool PowerSave = true;           // quiet the animations on battery
         public string Language = "en";
         public bool Compact = false;
         public int MiniX = -1, MiniY = -1;

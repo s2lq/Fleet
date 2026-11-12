@@ -80,7 +80,7 @@ Close all Roblox windows before turning multi-instance on. The exe is not code-s
 
 **Look**
 - Eight black and four light themes, your own colour schemes (import and export), six accent colours
-- Smooth animations (page slides, staggered cards, count-up numbers, toasts, pulsing running dots), a dots or grid background or none, and a reduce-motion switch
+- Smooth animations (page slides, staggered cards, count-up numbers, toasts, pulsing running dots) that stay light on the CPU: the interface is cached and only redrawn when it changes, the background moves at a low frame rate, and everything pauses when Fleet is in the background or on battery. Choose Efficient, Smooth or Minimal
 - Ten languages: Spanish, Portuguese, French, German, Italian, Turkish, Russian, Polish, Indonesian and Dutch
 
 **Data**

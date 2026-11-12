@@ -83,6 +83,30 @@ namespace Fleet
         public static Font Big { get { return Get(34, true); } }
     }
 
+    // how much animation the window may use: it adapts to the setting, to the battery and to whether Fleet is in front
+    public static class Motion
+    {
+        public static bool Minimal;     // no wallpaper movement, no pulses
+        public static int FastMs = 33;  // transitions
+        public static int WallMs = 100; // wallpaper
+        static DateTime checkedAt = DateTime.MinValue;
+        static bool onBattery;
+
+        public static void Refresh()
+        {
+            if ((DateTime.UtcNow - checkedAt).TotalSeconds > 15)
+            {
+                checkedAt = DateTime.UtcNow;
+                try { onBattery = System.Windows.Forms.SystemInformation.PowerStatus.PowerLineStatus == System.Windows.Forms.PowerLineStatus.Offline; }
+                catch (Exception) { onBattery = false; }
+            }
+            int mode = Store.Cfg.Motion;
+            Minimal = Store.Cfg.ReduceMotion || mode == 2 || (Store.Cfg.PowerSave && onBattery);
+            FastMs = mode == 1 ? 16 : 33;
+            WallMs = mode == 1 ? 50 : 100;
+        }
+    }
+
     public class ScrollState { public float Pos, Target; }
 
     public enum Btn { Primary, Ghost, Danger, Quiet }
@@ -99,6 +123,8 @@ namespace Fleet
         public List<Keys> KeyHits = new List<Keys>();
         public string Active, Focus;
         public bool NeedFrames, WantHand;
+        public int NeedMs;          // something that moves all the time asks for this many milliseconds between frames
+        public void Want(int ms) { if (NeedMs == 0 || ms < NeedMs) NeedMs = ms; }
         PointF local;
         bool clipHit = true;
         readonly Dictionary<string, float> anim = new Dictionary<string, float>();
@@ -118,7 +144,7 @@ namespace Fleet
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
             g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-            local = Mouse; clipHit = true; NeedFrames = false; WantHand = false;
+            local = Mouse; clipHit = true; NeedFrames = false; NeedMs = 0; WantHand = false;
         }
 
         public void EndFrame()
@@ -153,16 +179,20 @@ namespace Fleet
                 p.StartCap = LineCap.Round; p.EndCap = LineCap.Round;
                 G.DrawArc(p, r, (Time * 320f) % 360f, 100f);
             }
-            NeedFrames = true;
+            Want(66);
         }
 
         // a soft ring that grows and fades, used on the "running" dots
         public void Pulse(float cx, float cy, float rad, Color c)
         {
-            float t = (Time % 1.8f) / 1.8f;
+            if (Motion.Minimal) return;
+            // a short pulse, then a long rest: no frames are needed while it rests
+            float cycle = Time % 4.2f;
+            if (cycle > 1.3f) return;
+            float t = cycle / 1.3f;
             float rr = rad + t * 9f;
             using (Pen p = new Pen(Color.FromArgb((int)((1f - t) * 110), c.R, c.G, c.B), 1.6f)) G.DrawEllipse(p, cx - rr, cy - rr, rr * 2, rr * 2);
-            NeedFrames = true;
+            Want(80);
         }
         public bool Blocked;
         public bool Over(RectangleF r) { return !Blocked && clipHit && r.Contains(local) && !(pickId != null && pickBox.Contains(Mouse)); }
@@ -440,7 +470,7 @@ namespace Fleet
                     else if (ch >= ' ' && ch != 127) v += ch;
                 }
                 if (KeyHits.Contains(Keys.Enter) || KeyHits.Contains(Keys.Escape)) Focus = null;
-                NeedFrames = true;
+                Want(250);
             }
             RectangleF inner = new RectangleF(r.X + 14, r.Y, r.Width - 28, r.Height);
             if (v.Length == 0 && !focus) TextIn(hint, inner, Fonts.Body, Pal.Faint, StringAlignment.Near);

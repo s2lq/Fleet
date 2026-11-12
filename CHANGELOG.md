@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.0
+
+- Animations now use far less CPU: the interface is drawn into a cached layer and only redrawn when something changes, the wallpaper and pulses run at a low frame rate, a running-dot pulse rests between beats, and animation pauses when Fleet is minimized, in the background or (optionally) on battery
+- New Animation setting: Efficient (default), Smooth or Minimal
+- The 3D viewer only renders when the model moves
+
 ## 1.3.0
 
 - 3D avatar viewer: click an account's picture, Fleet downloads Roblox's own 3D model and shows it turning; drag to rotate, scroll to zoom

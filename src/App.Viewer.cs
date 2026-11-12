@@ -100,18 +100,19 @@ namespace Fleet
             if (ui.Pressed && inArea) { ui.Active = "vw.drag"; lastDrag = ui.Mouse; view3d.Auto = false; }
             if (ui.Active == "vw.drag" && ui.Down)
             {
+                view3d.Dirty = true;
                 view3d.Yaw += (ui.Mouse.X - lastDrag.X) * 0.012f;
                 view3d.Pitch = Math.Max(-0.9f, Math.Min(0.9f, view3d.Pitch + (ui.Mouse.Y - lastDrag.Y) * 0.008f));
                 lastDrag = ui.Mouse;
             }
-            if (inArea && Math.Abs(ui.Wheel) > 0.1f) view3d.Zoom = Math.Max(0.5f, Math.Min(3f, view3d.Zoom * (1f + ui.Wheel / 1500f)));
-            ui.NeedFrames = true;
+            if (inArea && Math.Abs(ui.Wheel) > 0.1f) { view3d.Zoom = Math.Max(0.5f, Math.Min(3f, view3d.Zoom * (1f + ui.Wheel / 1500f))); view3d.Dirty = true; }
+            ui.Want(view3d.Auto || ui.Active == "vw.drag" ? 50 : 150);
 
             float by = card.Bottom - 74;
             ui.Text("Drag to turn, scroll to zoom.", card.X + 28, by - 26, Fonts.Small, Pal.Faint);
             float bx = card.X + 28;
             if (ui.Button("vw.auto", new RectangleF(bx, by, 130, 42), view3d.Auto ? "Spinning" : "Spin", view3d.Auto ? Btn.Primary : Btn.Ghost, null)) view3d.Auto = !view3d.Auto; bx += 138;
-            if (ui.Button("vw.reset", new RectangleF(bx, by, 110, 42), "Reset", Btn.Ghost, null)) { view3d.Yaw = 0; view3d.Pitch = 0; view3d.Zoom = 1; view3d.Auto = true; } bx += 118;
+            if (ui.Button("vw.reset", new RectangleF(bx, by, 110, 42), "Reset", Btn.Ghost, null)) { view3d.Yaw = 0; view3d.Pitch = 0; view3d.Zoom = 1; view3d.Auto = true; view3d.Dirty = true; } bx += 118;
             if (ui.Button("vw.ref", new RectangleF(bx, by, 120, 42), "Reload", Btn.Ghost, "refresh")) { meshCache.Remove(a.UserId); OpenViewer(a); return; }
             if (ui.Button("vw.det", new RectangleF(card.Right - 28 - 120, by, 120, 42), "Details", Btn.Ghost, "info")) { Account q = a; ui.Forget("viewer"); CloseViewer(); OpenDetails(q); }
         }

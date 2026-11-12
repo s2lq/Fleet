@@ -12,12 +12,12 @@ namespace Fleet
 
         class Dot { public float X, Y, Speed, R, Phase; }
 
-        public bool Animated { get { return Store.Cfg.Wallpaper != "Off" && !Store.Cfg.ReduceMotion; } }
+        public bool Animated { get { return Store.Cfg.Wallpaper != "Off" && !Motion.Minimal; } }
 
         public void Draw(Graphics g, int w, int h, float t)
         {
             g.Clear(Pal.Bg);
-            if (Store.Cfg.ReduceMotion) t = 0;
+            if (Motion.Minimal) t = 0;
             if (Store.Cfg.Wallpaper == "Dots") DrawDots(g, w, h, t);
             else if (Store.Cfg.Wallpaper == "Grid") DrawGrid(g, w, h, t);
         }
@@ -25,7 +25,7 @@ namespace Fleet
         void DrawDots(Graphics g, int w, int h, float t)
         {
             if (dots.Count == 0)
-                for (int i = 0; i < 70; i++)
+                for (int i = 0; i < 42; i++)
                     dots.Add(new Dot { X = (float)rnd.NextDouble(), Y = (float)rnd.NextDouble(), Speed = 0.004f + (float)rnd.NextDouble() * 0.01f, R = 0.7f + (float)rnd.NextDouble() * 1.1f, Phase = (float)rnd.NextDouble() * 6.28f });
             foreach (Dot d in dots)
             {
