@@ -75,6 +75,8 @@ namespace Fleet
 
         static string robloxCache; static DateTime robloxCacheAt = DateTime.MinValue;
 
+        public static void ForgetRoblox() { robloxCache = null; }
+
         public static string FindRoblox()
         {
             if (robloxCache != null && File.Exists(robloxCache) && (DateTime.UtcNow - robloxCacheAt).TotalSeconds < 30) return robloxCache;
@@ -83,20 +85,44 @@ namespace Fleet
             return found;
         }
 
-        static string FindRobloxNow()
+        // the places Roblox keeps its version folders: the user's profile, or Program Files (the all-users install), or a folder picked in the optimizer
+        public static List<string> RobloxRoots()
         {
-            string root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Roblox", "Versions");
+            List<string> roots = new List<string>();
+            string local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            string pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), pf86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+            string[] all = { Store.Cfg.RobloxFolder, Path.Combine(local, "Roblox", "Versions"), Path.Combine(pf, "Roblox", "Versions"), Path.Combine(pf86, "Roblox", "Versions") };
+            foreach (string r in all)
+            {
+                if (string.IsNullOrEmpty(r)) continue;
+                string p = r;
+                if (Directory.Exists(Path.Combine(p, "Versions"))) p = Path.Combine(p, "Versions");
+                if (Directory.Exists(p) && !roots.Contains(p, StringComparer.OrdinalIgnoreCase)) roots.Add(p);
+            }
+            return roots;
+        }
+
+        // every installed player, newest first
+        public static List<string> RobloxExes()
+        {
+            List<string> list = new List<string>();
             try
             {
-                if (Directory.Exists(root))
-                    foreach (string d in Directory.GetDirectories(root).OrderByDescending(x => Directory.GetLastWriteTime(x)))
+                foreach (string root in RobloxRoots())
+                    foreach (string d in Directory.GetDirectories(root))
                     {
                         string exe = Path.Combine(d, "RobloxPlayerBeta.exe");
-                        if (File.Exists(exe)) return exe;
+                        if (File.Exists(exe)) list.Add(exe);
                     }
             }
             catch (Exception) { }
-            return null;
+            return list.OrderByDescending(x => File.GetLastWriteTime(x)).ToList();
+        }
+
+        static string FindRobloxNow()
+        {
+            List<string> all = RobloxExes();
+            return all.Count > 0 ? all[0] : null;
         }
 
         static string PlaceUrl(Target t, long tracker)
@@ -156,8 +182,9 @@ namespace Fleet
         {
             if (Busy) { Log.Add("A launch is already running."); return; }
             if (accounts.Count == 0) { Log.Add("Pick at least one account."); return; }
-            if (FindRoblox() == null && !accounts.Any(x => Versions.ExeFor(x) != null)) { Log.Add("Roblox is not installed for this Windows user. Install it from roblox.com first."); return; }
+            if (FindRoblox() == null && !accounts.Any(x => Versions.ExeFor(x) != null)) { Log.Add("Could not find Roblox. Install it from roblox.com, or pick its Versions folder under Tools > Optimizer."); return; }
             if (Store.Cfg.MultiInstance && !MultiActive) SetMultiInstance(true);
+            if (Store.Cfg.OptAuto) await Task.Run(() => Optimizer.EnsureFor(FindRoblox()));
             Busy = true;
             try
             {

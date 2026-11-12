@@ -63,6 +63,14 @@ namespace Fleet
             foreach (Match m in Regex.Matches(text, @"New WindowsPlayer (version-[0-9a-f]+) at (\S+ \S+ \S+)"))
                 list.Add(new Release { Version = m.Groups[1].Value, Date = m.Groups[2].Value });
             list.Reverse();
+            // the history file can lag behind, so ask Roblox for the current version too
+            try
+            {
+                string json = await Roblox.GetText("https://clientsettingscdn.roblox.com/v2/client-version/WindowsPlayer");
+                Match lm = Regex.Match(json, "\"clientVersionUpload\"\\s*:\\s*\"(version-[0-9a-f]+)\"");
+                if (lm.Success && !list.Any(r => r.Version == lm.Groups[1].Value)) list.Insert(0, new Release { Version = lm.Groups[1].Value, Date = "current" });
+            }
+            catch (Exception) { }
             return list.Take(20).ToList();
         }
 

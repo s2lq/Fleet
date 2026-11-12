@@ -2,6 +2,8 @@
 
 ## 1.9.0
 
+- tools > optimizer: swaps roblox's cursor for the normal windows pointer, replaces the font, turns the menu / emote wheel / top bar pictures black and white, and cleans old roblox versions, logs and cache. everything it changes is backed up and can be restored, and it can re-apply itself after roblox updates
+- finds roblox when it is installed in program files, and the version list now includes the current version
 - what's new window after an update, built from this changelog (also under settings > about)
 - a short first launch tour that lights up each page, with a skip button. replay it from settings > about
 - slimmer scrollbars that fade out, grow on hover and can be dragged

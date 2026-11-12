@@ -153,6 +153,11 @@ namespace Fleet
         public bool CheckUpdates = true;
         public List<ScheduleItem> Schedule = new List<ScheduleItem>();
         public bool LowerGfxOnCrash = false;
+        public string RobloxFolder = "";
+        public bool OptCursor = true, OptFont = true, OptMono = true, OptCleanCache, OptAuto;
+        public bool OptMonoMenu = true, OptMonoEmotes = true, OptMonoHud = true, OptMonoOther;
+        public bool OptCleanOld = true, OptCleanLogs = true;
+        public string OptFontName = "Segoe UI", OptFontFile = "";
         public string BackupFolder = "";
         public bool UrlHandler = false;
         public bool RichPresence = false;
