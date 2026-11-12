@@ -18,8 +18,6 @@ Fleet keeps all your Roblox accounts in one place and starts as many of them as 
   <img src="docs/screenshots/accounts.png" width="49%" alt="Accounts">
 </p>
 
-## Community
-
 
 ## Contents
 
