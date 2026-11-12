@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -41,7 +42,8 @@ namespace Fleet
             float y = view.Y + 4;
             foreach (SavedServer s in Store.Servers.ToList())
             {
-                RectangleF r = new RectangleF(a.X, y, a.Width, rh);
+                float e = ui.Appear("ps" + s.Id, 0);
+                RectangleF r = new RectangleF(a.X, y + (1f - e) * 16f, a.Width, rh);
                 ui.Glass(r, 14, 0);
                 int count = Store.Accounts.Count(q => q.ServerId == s.Id);
                 ui.Text(Ui.Fit(ui, s.Name, Fonts.BodyB, 260), r.X + 22, r.Y + 14, Fonts.BodyB, Pal.Text);
@@ -121,7 +123,8 @@ namespace Fleet
             if (ui.Button("pb.go", new RectangleF(a.X + 310, by, 130, 42), "Load", Btn.Primary, "refresh")) LoadPublic();
             pubSort = ui.Segmented("pb.sort", new RectangleF(a.X + 456, by, 360, 42), new string[] { "Fewest players", "Most players", "Best ping" }, pubSort);
             if (ui.Button("pb.rand", new RectangleF(a.Right - 180, by, 180, 42), "Random server", Btn.Ghost, null) && pubServers.Count > 0) JoinPublic(pubServers[new Random().Next(pubServers.Count)]);
-            if (pubStatus.Length > 0) ui.Text(pubStatus, a.X, by + 52, Fonts.Small, Pal.Muted);
+            if (pubStatus == "Loading...") ui.Spinner(new RectangleF(a.X, by + 50, 16, 16), Pal.Muted);
+            if (pubStatus.Length > 0) ui.Text(pubStatus, a.X + (pubStatus == "Loading..." ? 24 : 0), by + 52, Fonts.Small, Pal.Muted);
             ui.Text(Lang.F("Click a server to put the {0} selected account(s) in it.", selected.Count), a.X, by + 52 + (pubStatus.Length > 0 ? 20 : 0), Fonts.Small, Pal.Faint);
 
             RectangleF view = new RectangleF(a.X - 8, by + 96, a.Width + 16, a.Bottom - by - 96);

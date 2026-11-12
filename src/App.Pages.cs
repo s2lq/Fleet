@@ -151,9 +151,9 @@ namespace Fleet
                 {
                     ui.Text(Ui.Fit(ui, r.Acc.Label, Fonts.BodyB, 150), live.X + 26, ry, Fonts.BodyB, Pal.Text);
                     float bx = live.X + 190, bw = (live.Width - 216 - 24) / 2;
-                    ui.Bar(new RectangleF(bx, ry + 6, bw, 8), (float)(r.Cpu / 30.0), Pal.A, Pal.A);
+                    ui.Bar(new RectangleF(bx, ry + 6, bw, 8), ui.Anim("bc" + r.Acc.Id, (float)(r.Cpu / 30.0), 0.15f), Pal.A, Pal.A);
                     ui.Text(r.Cpu.ToString("0.0") + "% CPU", bx, ry + 20, Fonts.Small, Pal.Muted);
-                    ui.Bar(new RectangleF(bx + bw + 24, ry + 6, bw, 8), r.Ram / (float)maxRam, Pal.A, Pal.A);
+                    ui.Bar(new RectangleF(bx + bw + 24, ry + 6, bw, 8), ui.Anim("br" + r.Acc.Id, r.Ram / (float)maxRam, 0.15f), Pal.A, Pal.A);
                     ui.Text(Mem(r.Ram), bx + bw + 24, ry + 20, Fonts.Small, Pal.Muted);
                     ry += 52;
                 }

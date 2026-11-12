@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -98,7 +99,15 @@ namespace Fleet
             {
                 float rh = 62;
                 ui.BeginScroll(view, list.Count * (rh + 8) + 8, sc);
-                for (int i = 0; i < list.Count; i++) DrawRow(ui, new RectangleF(a.X, view.Y + 4 + i * (rh + 8), a.Width, rh), list[i]);
+                for (int i = 0; i < list.Count; i++)
+                {
+                    float e = ui.Appear("r" + list[i].Id, i);
+                    if (e <= 0.001f) continue;
+                    GraphicsState gs = ui.G.Save();
+                    ui.G.TranslateTransform(0, (1f - e) * 16f);
+                    DrawRow(ui, new RectangleF(a.X, view.Y + 4 + i * (rh + 8), a.Width, rh), list[i]);
+                    ui.G.Restore(gs);
+                }
                 ui.EndScroll();
                 return;
             }
@@ -109,7 +118,14 @@ namespace Fleet
             float ch = 218;
             ui.BeginScroll(view, rows * (ch + gap) + 8, sc);
             for (int i = 0; i < list.Count; i++)
+            {
+                float e = ui.Appear("c" + list[i].Id, i);
+                if (e <= 0.001f) continue;
+                GraphicsState gs = ui.G.Save();
+                ui.G.TranslateTransform(0, (1f - e) * 22f);
                 DrawCard(ui, new RectangleF(a.X + (i % cols2) * (realW + gap), view.Y + 4 + (i / cols2) * (ch + gap), realW, ch), list[i]);
+                ui.G.Restore(gs);
+            }
             ui.EndScroll();
         }
 
@@ -148,7 +164,7 @@ namespace Fleet
             Running run = Engine.Of(a);
 
             ui.Avatar(new RectangleF(r.X + 18, r.Y + 18, 52, 52), a);
-            if (run != null) ui.Fill(new RectangleF(r.X + 56, r.Y + 56, 14, 14), 7, Pal.Good);
+            if (run != null) { ui.Pulse(r.X + 63, r.Y + 63, 7, Pal.Good); ui.Fill(new RectangleF(r.X + 56, r.Y + 56, 14, 14), 7, Pal.Good); }
             ui.Text(Ui.Fit(ui, a.Label, Fonts.BodyB, r.Width - 140), r.X + 82, r.Y + 22, Fonts.BodyB, Pal.Text);
             ui.Text(Ui.Fit(ui, "@" + a.Name, Fonts.Small, r.Width - 140), r.X + 82, r.Y + 44, Fonts.Small, Pal.Muted);
             SelBox(ui, new RectangleF(r.Right - 18 - 22, r.Y + 18, 22, 22), a);

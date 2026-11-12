@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -15,6 +16,11 @@ namespace Fleet
         public readonly HashSet<string> selected = new HashSet<string>();
         int secondCount;
         string updateText = "";
+        string lastPage = "";
+        int lastToast = Log.Total;
+        readonly List<Toast> toasts = new List<Toast>();
+
+        class Toast { public string Text; public float Born; public Color Tint; }
 
         public App(Canvas c) { canvas = c; }
 
@@ -60,7 +66,16 @@ namespace Fleet
             float cw = Math.Min(1200, ui.W - 64);
             RectangleF area = new RectangleF((ui.W - cw) / 2, topH + 8, cw, ui.H - topH - 20);
             if (!Store.Cfg.FirstRunDone) { DrawWizard(ui, area); ui.Overlay(); return; }
+            if (page != lastPage)
+            {
+                lastPage = page;
+                ui.ResetAppear();
+                ui.Set("page." + page, 0f);
+                if (page == "Overview") { ui.Set("t.acc", 0f); ui.Set("t.run", 0f); ui.Set("t.cpu", 0f); ui.Set("t.ram", 0f); }
+            }
             float fade = ui.Anim("page." + page, 1f, 0.2f);
+            GraphicsState slide = ui.G.Save();
+            ui.G.TranslateTransform(0, (1f - fade) * 14f);
             switch (page)
             {
                 case "Overview": DrawOverview(ui, area); break;
@@ -73,8 +88,42 @@ namespace Fleet
                 case "Tools": DrawTools(ui, area); break;
                 default: DrawSettings(ui, area); break;
             }
+            ui.G.Restore(slide);
             if (fade < 0.99f) ui.Fill(new RectangleF(0, topH, ui.W, ui.H - topH), 0, Color.FromArgb((int)((1 - fade) * 200), Pal.Bg.R, Pal.Bg.G, Pal.Bg.B));
+            DrawToasts(ui);
             ui.Overlay();
+        }
+
+        void DrawToasts(Ui ui)
+        {
+            lock (Log.Lines)
+                foreach (Log.Entry e in Log.Lines)
+                    if (e.Id > lastToast)
+                    {
+                        lastToast = e.Id;
+                        string l = e.Text.ToLower();
+                        Color tint = l.Contains("fail") || l.Contains("could not") || l.Contains("error") || l.Contains("signed out") || l.Contains("locked") ? Pal.Bad : (l.Contains("running") || l.Contains("added") || l.Contains("finished") || l.Contains("works") ? Pal.Good : Pal.Muted);
+                        toasts.Add(new Toast { Text = e.Text, Born = ui.Time, Tint = tint });
+                    }
+            toasts.RemoveAll(t => ui.Time - t.Born > 4.4f);
+            while (toasts.Count > 3) toasts.RemoveAt(0);
+            for (int i = 0; i < toasts.Count; i++)
+            {
+                Toast t = toasts[toasts.Count - 1 - i];
+                float age = ui.Time - t.Born;
+                float inn = Math.Min(1f, age / 0.4f), outt = age > 4f ? (age - 4f) / 0.4f : 0f;
+                float ease = 1f - (1f - inn) * (1f - inn) * (1f - inn);
+                float w = Math.Min(380, ui.W - 40), h = 46;
+                float x = ui.W - 24 - w + (1f - ease) * (w + 30) + outt * (w + 30);
+                float y = ui.H - 24 - h - i * 54;
+                RectangleF r = new RectangleF(x, y, w, h);
+                ui.Fill(new RectangleF(r.X - 1, r.Y - 1, r.Width + 2, r.Height + 2), 12, Color.Black);
+                ui.Fill(r, 11, Pal.Panel2);
+                ui.Stroke(r, 11, Pal.Line2, 1f);
+                ui.Fill(new RectangleF(r.X + 10, r.Y + 12, 3, r.Height - 24), 1.5f, t.Tint);
+                ui.TextIn(Ui.Fit(ui, t.Text, Fonts.Body, w - 40), new RectangleF(r.X + 24, r.Y, w - 36, h), Fonts.Body, Pal.Text, StringAlignment.Near);
+                ui.NeedFrames = true;
+            }
         }
 
         void DrawTopBar(Ui ui, float h)
@@ -209,10 +258,10 @@ namespace Fleet
             float gap = 16, tw = (a.Width - gap * 3) / 4;
             double cpu = Engine.Live.Sum(r => r.Cpu);
             long ram = Engine.Live.Sum(r => r.Ram);
-            Tile(ui, new RectangleF(a.X, y, tw, 104), "Accounts", Store.Accounts.Count.ToString(), "saved on this PC");
-            Tile(ui, new RectangleF(a.X + (tw + gap), y, tw, 104), "Running", Engine.Live.Count.ToString(), "Roblox windows");
-            Tile(ui, new RectangleF(a.X + (tw + gap) * 2, y, tw, 104), "CPU", cpu.ToString("0.0") + "%", "of the whole PC");
-            Tile(ui, new RectangleF(a.X + (tw + gap) * 3, y, tw, 104), "Memory", Mem(ram), Engine.Live.Count > 0 ? Lang.F("about {0} each", Mem(ram / Engine.Live.Count)) : "used by Roblox");
+            Tile(ui, new RectangleF(a.X, y, tw, 104), "Accounts", Math.Round(ui.Anim("t.acc", Store.Accounts.Count, 0.18f)).ToString(), "saved on this PC");
+            Tile(ui, new RectangleF(a.X + (tw + gap), y, tw, 104), "Running", Math.Round(ui.Anim("t.run", Engine.Live.Count, 0.18f)).ToString(), "Roblox windows");
+            Tile(ui, new RectangleF(a.X + (tw + gap) * 2, y, tw, 104), "CPU", ui.Anim("t.cpu", (float)cpu, 0.14f).ToString("0.0") + "%", "of the whole PC");
+            Tile(ui, new RectangleF(a.X + (tw + gap) * 3, y, tw, 104), "Memory", Mem((long)ui.Anim("t.ram", (float)ram, 0.12f)), Engine.Live.Count > 0 ? Lang.F("about {0} each", Mem(ram / Engine.Live.Count)) : "used by Roblox");
             y += 104 + 20;
 
             float lw = Math.Min(440, a.Width * 0.4f);
@@ -231,7 +280,10 @@ namespace Fleet
             ui.Glass(right, 18, 0);
             ui.Text("Running now", right.X + 24, right.Y + 20, Fonts.H2, Pal.Text);
             if (Engine.Live.Count == 0)
-                ui.TextIn(Engine.Busy ? Engine.BusyText : "Nothing is running. Launch your accounts and they appear here.", new RectangleF(right.X + 24, right.Y + 60, right.Width - 48, 150), Fonts.Body, Pal.Muted, StringAlignment.Center);
+            {
+                if (Engine.Busy) ui.Spinner(new RectangleF(right.X + right.Width / 2 - 11, right.Y + 96, 22, 22), Pal.A);
+                ui.TextIn(Engine.Busy ? Engine.BusyText : "Nothing is running. Launch your accounts and they appear here.", new RectangleF(right.X + 24, right.Y + 60 + (Engine.Busy ? 50 : 0), right.Width - 48, 150), Fonts.Body, Pal.Muted, StringAlignment.Center);
+            }
             else
             {
                 float ry = right.Y + 62;

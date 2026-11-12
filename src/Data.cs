@@ -406,7 +406,8 @@ namespace Fleet
 
     public static class Log
     {
-        public class Entry { public DateTime At; public string Text; }
+        public class Entry { public DateTime At; public string Text; public int Id; }
+        public static int Total;
         public static readonly List<Entry> Lines = new List<Entry>();
         public static event Action Changed;
 
@@ -414,7 +415,7 @@ namespace Fleet
         {
             lock (Lines)
             {
-                Lines.Add(new Entry { At = DateTime.Now, Text = text });
+                Lines.Add(new Entry { At = DateTime.Now, Text = text, Id = ++Total });
                 if (Lines.Count > 400) Lines.RemoveRange(0, 100);
             }
             Action h = Changed;

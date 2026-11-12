@@ -123,6 +123,41 @@ namespace Fleet
         }
 
         public void Set(string id, float v) { anim[id] = v; }
+
+        readonly Dictionary<string, float> appear = new Dictionary<string, float>();
+        public void ResetAppear() { appear.Clear(); }
+
+        // 0 to 1, eased out. Items with a higher index start a little later, so a list slides in one by one.
+        public float Appear(string key, int index)
+        {
+            float start;
+            if (!appear.TryGetValue(key, out start)) { start = Time + Math.Min(index, 12) * 0.045f; appear[key] = start; }
+            float t = (Time - start) / 0.38f;
+            if (t >= 1f) return 1f;
+            NeedFrames = true;
+            if (t <= 0f) return 0f;
+            float u = 1f - t;
+            return 1f - u * u * u;
+        }
+
+        public void Spinner(RectangleF r, Color c)
+        {
+            using (Pen p = new Pen(c, 2.2f))
+            {
+                p.StartCap = LineCap.Round; p.EndCap = LineCap.Round;
+                G.DrawArc(p, r, (Time * 320f) % 360f, 100f);
+            }
+            NeedFrames = true;
+        }
+
+        // a soft ring that grows and fades, used on the "running" dots
+        public void Pulse(float cx, float cy, float rad, Color c)
+        {
+            float t = (Time % 1.8f) / 1.8f;
+            float rr = rad + t * 9f;
+            using (Pen p = new Pen(Color.FromArgb((int)((1f - t) * 110), c.R, c.G, c.B), 1.6f)) G.DrawEllipse(p, cx - rr, cy - rr, rr * 2, rr * 2);
+            NeedFrames = true;
+        }
         public bool Over(RectangleF r) { return clipHit && r.Contains(local) && !(pickId != null && pickBox.Contains(Mouse)); }
 
         public float Anim(string id, float target, float speed)
@@ -477,7 +512,7 @@ namespace Fleet
                 G.DrawLines(p, new PointF[] { new PointF(cx - 4, cy - 2), new PointF(cx, cy + 2), new PointF(cx + 4, cy - 2) });
             }
             if (pickResultId == id && pickResult >= 0) { sel = pickResult; pickResult = -1; pickResultId = null; }
-            if (Pressed && over && pickId != id) { pickId = id; pickFrom = r; pickItems = items; pickScroll = 0; Pressed = false; }
+            if (Pressed && over && pickId != id) { pickId = id; pickFrom = r; pickItems = items; pickScroll = 0; Pressed = false; Set("pick.open", 0f); }
             return sel;
         }
 
@@ -489,6 +524,9 @@ namespace Fleet
             float rh = 34;
             pickBox = new RectangleF(pickFrom.X, pickFrom.Bottom + 4, pickFrom.Width, rows * rh + 8);
             if (pickBox.Bottom > H - 8) pickBox = new RectangleF(pickFrom.X, pickFrom.Y - 4 - (rows * rh + 8), pickFrom.Width, rows * rh + 8);
+            float open = Anim("pick.open", 1f, 0.3f);
+            GraphicsState gs = G.Save();
+            G.SetClip(new RectangleF(pickBox.X - 3, pickBox.Y - 3, pickBox.Width + 6, (pickBox.Height + 6) * open));
             Fill(new RectangleF(pickBox.X - 1, pickBox.Y - 1, pickBox.Width + 2, pickBox.Height + 2), 10, Color.Black);
             Fill(pickBox, 9, Pal.Panel2);
             Stroke(pickBox, 9, Pal.Line2, 1f);
@@ -502,6 +540,7 @@ namespace Fleet
                 TextIn(Fit(this, Lang.T(pickItems[first + i]), Fonts.Body, row.Width - 20), new RectangleF(row.X + 10, row.Y, row.Width - 20, row.Height), Fonts.Body, Pal.Text, StringAlignment.Near);
                 if (Pressed && hot) { pickResult = first + i; pickResultId = pickId; }
             }
+            G.Restore(gs);
             if (Pressed) { pickId = null; pickBox = RectangleF.Empty; }
             NeedFrames = true;
         }

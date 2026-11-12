@@ -74,7 +74,7 @@ Close all Roblox windows before turning multi-instance on. The exe is not code-s
 
 **Look**
 - Eight black themes, your own colour schemes (import and export), six accent colours
-- Dots or grid background, or off, and a reduce-motion switch
+- Smooth animations (page slides, staggered cards, count-up numbers, toasts, pulsing running dots), a dots or grid background or none, and a reduce-motion switch
 - Ten languages: Spanish, Portuguese, French, German, Italian, Turkish, Russian, Polish, Indonesian and Dutch
 
 **Data**

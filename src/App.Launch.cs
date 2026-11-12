@@ -141,6 +141,7 @@ namespace Fleet
 
             float by = y + 494;
             bool busy = Engine.Busy;
+            if (busy) ui.Spinner(new RectangleF(a.X + 16, by + 17, 18, 18), Color.Black);
             if (ui.Button("ln.go", new RectangleF(a.X, by, 240, 52), busy ? Engine.BusyText : "Launch", Btn.Primary, busy ? null : "play") && !busy)
             {
                 Store.SaveSettings();
