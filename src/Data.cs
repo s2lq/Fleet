@@ -30,6 +30,11 @@ namespace Fleet
         public int FpsCap;
         public long Robux = -1;
         public bool Premium;
+        public string Created = "";
+        public int Friends = -1;
+        public int Followers = -1;
+        public List<string> FriendNames = new List<string>();
+        public long DetailsTicks;
         public int Status;
         public long LastCheck;
         public long LastLaunch;
@@ -131,6 +136,11 @@ namespace Fleet
         public bool StartWithWindows = false;
 
         public bool CheckUpdates = true;
+        public bool RichPresence = false;
+        public string DiscordAppId = "";
+        public bool SysMemAuto = false;
+        public int SysMemThreshold = 80;
+        public bool GameProxyEnv = false;
         public bool AutoInstall = false;
 
         public int LayoutMonitor = 0;

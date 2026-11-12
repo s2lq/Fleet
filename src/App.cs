@@ -47,6 +47,8 @@ namespace Fleet
             if (secondCount % Math.Max(10, Store.Cfg.WatcherSec) == 0) Engine.WatcherTick();
             if (Store.Cfg.HealthAuto && secondCount % (Math.Max(1, Store.Cfg.HealthHours) * 3600) == 0) CheckAll(true);
             if (secondCount % 1800 == 5) RefreshRobuxAll();
+            if (secondCount % 15 == 3) Rpc.Update(Engine.Live.Count, Store.Accounts.Count);
+            if (Store.Cfg.SysMemAuto && secondCount % 20 == 7) AutoCleanMemory();
         }
 
         void Go(string p) { page = p; }
@@ -62,6 +64,7 @@ namespace Fleet
         public void Render(Ui ui)
         {
             float topH = 76;
+            ui.Blocked = detail != null;
             DrawTopBar(ui, topH);
             float cw = Math.Min(1200, ui.W - 64);
             RectangleF area = new RectangleF((ui.W - cw) / 2, topH + 8, cw, ui.H - topH - 20);
@@ -90,6 +93,8 @@ namespace Fleet
             }
             ui.G.Restore(slide);
             if (fade < 0.99f) ui.Fill(new RectangleF(0, topH, ui.W, ui.H - topH), 0, Color.FromArgb((int)((1 - fade) * 200), Pal.Bg.R, Pal.Bg.G, Pal.Bg.B));
+            ui.Blocked = false;
+            if (detail != null) DrawDetails(ui);
             DrawToasts(ui);
             ui.Overlay();
         }

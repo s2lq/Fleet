@@ -22,6 +22,8 @@ namespace Fleet
             }
             try { string old = Application.ExecutablePath + ".old"; if (File.Exists(old)) File.Delete(old); } catch (Exception) { }
 
+            if (Array.IndexOf(args, "--memclean") >= 0) { MemClean.Clean(); return; }
+
             bool created;
             single = new Mutex(true, "Fleet_SingleInstance", out created);
             if (!created) return;

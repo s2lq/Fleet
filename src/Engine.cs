@@ -171,11 +171,18 @@ namespace Fleet
                 string placeUrl = PlaceUrl(t, tracker);
                 if (a.FpsCap > 0) SetFpsCap(a.FpsCap);
                 string pinned = Versions.PinnedExe();
-                if (pinned != null || Store.Cfg.LaunchMethod == "Direct")
+                bool proxyEnv = Store.Cfg.GameProxyEnv && !string.IsNullOrEmpty(a.Proxy);
+                if (pinned != null || Store.Cfg.LaunchMethod == "Direct" || proxyEnv)
                 {
                     string exe = pinned ?? FindRoblox();
                     string args = "--app -t " + ticket + " -j \"" + placeUrl + "\" -b " + tracker + " --launchtime=" + now + " --rloc en_us --gloc en_us";
                     ProcessStartInfo psi = new ProcessStartInfo(exe, args) { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(exe) };
+                    if (proxyEnv)
+                    {
+                        string[] px = a.Proxy.Split(':');
+                        string url = "http://" + (px.Length >= 4 ? px[2] + ":" + px[3] + "@" : "") + px[0] + ":" + (px.Length > 1 ? px[1] : "80");
+                        psi.EnvironmentVariables["HTTP_PROXY"] = url; psi.EnvironmentVariables["HTTPS_PROXY"] = url; psi.EnvironmentVariables["ALL_PROXY"] = url;
+                    }
                     await Task.Run(delegate { using (Process.Start(psi)) { } });
                 }
                 else

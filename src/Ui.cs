@@ -131,6 +131,7 @@ namespace Fleet
 
         readonly Dictionary<string, float> appear = new Dictionary<string, float>();
         public void ResetAppear() { appear.Clear(); }
+        public void Forget(string key) { appear.Remove(key); }
 
         // 0 to 1, eased out. Items with a higher index start a little later, so a list slides in one by one.
         public float Appear(string key, int index)
@@ -163,7 +164,8 @@ namespace Fleet
             using (Pen p = new Pen(Color.FromArgb((int)((1f - t) * 110), c.R, c.G, c.B), 1.6f)) G.DrawEllipse(p, cx - rr, cy - rr, rr * 2, rr * 2);
             NeedFrames = true;
         }
-        public bool Over(RectangleF r) { return clipHit && r.Contains(local) && !(pickId != null && pickBox.Contains(Mouse)); }
+        public bool Blocked;
+        public bool Over(RectangleF r) { return !Blocked && clipHit && r.Contains(local) && !(pickId != null && pickBox.Contains(Mouse)); }
 
         public float Anim(string id, float target, float speed)
         {
@@ -279,6 +281,7 @@ namespace Fleet
                 p.StartCap = LineCap.Round; p.EndCap = LineCap.Round; p.LineJoin = LineJoin.Round;
                 switch (name)
                 {
+                    case "info": G.DrawEllipse(p, cx - s * 0.7f, cy - s * 0.7f, s * 1.4f, s * 1.4f); G.DrawLine(p, cx, cy - s * 0.05f, cx, cy + s * 0.35f); G.FillEllipse(b, cx - s * 0.09f, cy - s * 0.4f, s * 0.18f, s * 0.18f); break;
                     case "play": G.FillPolygon(b, new PointF[] { new PointF(cx - s * 0.45f, cy - s * 0.6f), new PointF(cx + s * 0.65f, cy), new PointF(cx - s * 0.45f, cy + s * 0.6f) }); break;
                     case "stop": G.FillPath(b, Round(new RectangleF(cx - s * 0.5f, cy - s * 0.5f, s, s), 2)); break;
                     case "plus": G.DrawLine(p, cx - s * 0.6f, cy, cx + s * 0.6f, cy); G.DrawLine(p, cx, cy - s * 0.6f, cx, cy + s * 0.6f); break;

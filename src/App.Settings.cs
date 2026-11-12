@@ -23,7 +23,7 @@ namespace Fleet
             RectangleF view = new RectangleF(a.X - 8, a.Y + 82, a.Width + 16, a.Height - 82);
             RectangleF col = new RectangleF(a.X, view.Y + 8, Math.Min(a.Width, 860), 0);
             ScrollState sc = Scroll("settings" + setSub);
-            float[] heights = { 1360, 700, 640, 700, 760, 260 };
+            float[] heights = { 1650, 700, 820, 700, 760, 260 };
             ui.BeginScroll(view, heights[setSub], sc);
             switch (setSub)
             {
@@ -86,6 +86,13 @@ namespace Fleet
             b = Tog(ui, "d.rel", "An account is relaunched", "", x, ry, w, c.HookRelaunch); if (b != c.HookRelaunch) { c.HookRelaunch = b; Save(); } ry += 40;
             b = Tog(ui, "d.lock", "An account is locked", "", x, ry, w, c.HookLocked); if (b != c.HookLocked) { c.HookLocked = b; Save(); } ry += 40;
             b = Tog(ui, "d.batch", "A launch finishes", "", x, ry, w, c.HookBatch); if (b != c.HookBatch) { c.HookBatch = b; Save(); }
+            y = s.Bottom + 16;
+
+            s = Sect(ui, col, y, 250, "Discord Rich Presence");
+            x = s.X + 28; w = s.Width - 56; ry = s.Y + 62;
+            b = Tog(ui, "rp.on", "Show Fleet on my Discord profile", "Shows how many accounts are running.", x, ry, w, c.RichPresence); if (b != c.RichPresence) { c.RichPresence = b; Save(); Rpc.Update(Engine.Live.Count, Store.Accounts.Count); } ry += 58;
+            c.DiscordAppId = ui.TextField("rp.id", new RectangleF(x, ry, w, 42), c.DiscordAppId, "Your Discord Application ID (a number)");
+            ui.Text(Rpc.Status.Length > 0 ? Rpc.Status : "Make an app at discord.com/developers and paste its Application ID.", x, ry + 52, Fonts.Small, Pal.Muted);
         }
 
         // ---------------------------------------------------------------- appearance
@@ -168,7 +175,7 @@ namespace Fleet
         void SetNetwork(Ui ui, RectangleF col)
         {
             Settings c = Store.Cfg;
-            RectangleF s = Sect(ui, col, col.Y, 520, "Proxies");
+            RectangleF s = Sect(ui, col, col.Y, 440, "Proxies");
             float x = s.X + 28, w = s.Width - 56, ry = s.Y + 62;
             int count = Proxies.Pool().Count;
             ui.Text(Lang.F("{0} proxies in the list. They are used for Fleet's own web requests per account, not for the Roblox game traffic.", count), x, ry, Fonts.Body, Pal.Muted);
@@ -187,6 +194,11 @@ namespace Fleet
             if (ui.Button("n.rm", new RectangleF(x + 240, ry, 250, 42), "Remove automatic proxies", Btn.Danger, null)) Log.Add(Proxies.RemoveAuto() + " proxy assignment(s) removed.");
             ry += 62;
             foreach (string line in pxTest.Take(5)) { ui.Text(line, x, ry, Fonts.Small, Pal.Muted); ry += 20; }
+            float py = s.Bottom + 16;
+            RectangleF g = Sect(ui, col, py, 250, "Roblox itself (experimental)");
+            bool ge = Tog(ui, "n.env", "Try to route Roblox through the account's proxy", "Starts Roblox directly with proxy settings in its environment.", g.X + 28, g.Y + 62, g.Width - 56, c.GameProxyEnv);
+            if (ge != c.GameProxyEnv) { c.GameProxyEnv = ge; Save(); }
+            ui.Para("Only web requests that Roblox sends through the system proxy settings are covered, and only if it honours them. Gameplay traffic is UDP and is not proxied by this. For full coverage run each account behind its own VPN or a proxifier tool.", new RectangleF(g.X + 28, g.Y + 118, g.Width - 56, 110), Fonts.Small, Pal.Muted);
         }
 
         void EditProxies()
@@ -241,6 +253,7 @@ namespace Fleet
 
             s = Sect(ui, col, py, 150, "Folder and reset");
             x = s.X + 28; ry = s.Y + 62;
+            if (ui.Button("o.imp", new RectangleF(x + 460, ry, 260, 42), "Import from another manager", Btn.Ghost, null)) ImportFromManager();
             if (ui.Button("o.open", new RectangleF(x, ry, 200, 42), "Open data folder", Btn.Ghost, null)) { try { Process.Start(new ProcessStartInfo(Store.Dir) { UseShellExecute = true }); } catch (Exception ex) { Log.Add(ex.Message); } }
             if (ui.Button("o.wipe", new RectangleF(x + 210, ry, 240, 42), "Remove all accounts", Btn.Danger, "trash")) canvas.Post(delegate
             {

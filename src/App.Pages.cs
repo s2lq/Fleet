@@ -158,7 +158,50 @@ namespace Fleet
                     ry += 52;
                 }
             }
+
+            // whole-PC memory
+            RectangleF sm = new RectangleF(a.X + lw + 16, y + 456, a.Width - lw - 16, 330);
+            ui.Glass(sm, 18, 0);
+            ui.Text("System memory", sm.X + 26, sm.Y + 22, Fonts.H2, Pal.Text);
+            int load; long total, avail;
+            if (MemClean.Status(out load, out total, out avail))
+            {
+                ui.Text(Lang.F("{0}% used, {1} free of {2}", load, Mem(avail), Mem(total)), sm.X + 26, sm.Y + 58, Fonts.Body, Pal.Muted);
+                ui.Bar(new RectangleF(sm.X + 26, sm.Y + 90, sm.Width - 52, 10), ui.Anim("sysmem", load / 100f, 0.15f), load > 85 ? Pal.Bad : Pal.A, Pal.A);
+            }
+            bool admin = MemClean.IsAdmin();
+            if (ui.Button("sm.clean", new RectangleF(sm.X + 26, sm.Y + 122, 220, 44), "Clean memory now", Btn.Primary, "bolt")) CleanMemoryNow();
+            ui.Text(admin ? "Running as administrator." : "Windows asks for administrator rights for each clean.", sm.X + 262, sm.Y + 136, Fonts.Small, Pal.Faint);
+            bool sa = Tog(ui, "sm.auto", "Clean automatically", Lang.F("When memory use is above {0}%. Needs Fleet to run as administrator.", c.SysMemThreshold), sm.X + 26, sm.Y + 190, sm.Width - 52, c.SysMemAuto);
+            if (sa != c.SysMemAuto) { c.SysMemAuto = sa; Store.SaveSettings(); }
+            int st = ui.Slider("sm.thr", new RectangleF(sm.X + 26, sm.Y + 236, sm.Width - 52, 24), c.SysMemThreshold, 50, 95);
+            if (st != c.SysMemThreshold) { c.SysMemThreshold = st; Store.SaveSettings(); }
+            if (!admin && ui.Button("sm.admin", new RectangleF(sm.X + 26, sm.Y + 274, 260, 40), "Restart as administrator", Btn.Ghost, null)) MemClean.RestartAsAdmin();
             ui.EndScroll();
+        }
+
+        DateTime lastClean = DateTime.MinValue;
+
+        void CleanMemoryNow()
+        {
+            canvas.Post(delegate
+            {
+                int l0; long t0, a0; MemClean.Status(out l0, out t0, out a0);
+                string err = MemClean.IsAdmin() ? MemClean.Clean() : MemClean.CleanElevated();
+                int l1; long t1, a1; MemClean.Status(out l1, out t1, out a1);
+                Log.Add(err != null ? "Memory clean: " + err : "Memory cleaned: " + Mem(Math.Max(0, a1 - a0)) + " freed.");
+                lastClean = DateTime.Now;
+            });
+        }
+
+        void AutoCleanMemory()
+        {
+            int load; long total, avail;
+            if (!MemClean.Status(out load, out total, out avail) || load < Store.Cfg.SysMemThreshold) return;
+            if ((DateTime.Now - lastClean).TotalSeconds < 90 || !MemClean.IsAdmin()) return;
+            lastClean = DateTime.Now;
+            string err = MemClean.Clean();
+            Log.Add(err != null ? "Memory clean: " + err : "Memory was at " + load + "%, cleaned automatically.");
         }
     }
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -190,10 +191,12 @@ namespace Fleet
             ui.Text(Ui.Fit(ui, line, Fonts.Small, r.Width - 36), r.X + 18, ty + 28, Fonts.Small, Pal.Faint);
 
             float by = r.Bottom - 18 - 34;
-            float bw = r.Width - 36 - 3 * 40;
+            float bw = r.Width - 36 - 4 * 40;
             if (run == null) { if (ui.Button("c.l" + a.Id, new RectangleF(r.X + 18, by, bw, 34), "Launch", Btn.Primary, "play")) LaunchList(new List<Account> { a }); }
             else if (ui.Button("c.s" + a.Id, new RectangleF(r.X + 18, by, bw, 34), "Stop", Btn.Danger, "stop")) Engine.Kill(run);
             float x = r.X + 18 + bw + 4;
+            if (ui.Button("c.i" + a.Id, new RectangleF(x, by, 34, 34), "", Btn.Quiet, "info")) OpenDetails(a);
+            x += 40;
             if (ui.Button("c.e" + a.Id, new RectangleF(x, by, 34, 34), "", Btn.Quiet, "edit")) EditOne(a);
             x += 40;
             if (ui.Button("c.m" + a.Id, new RectangleF(x, by, 34, 34), "", Btn.Quiet, a.Muted ? "stop" : "bolt")) { a.Muted = !a.Muted; if (run != null) Audio.SetMute(run.Pid, a.Muted); Store.SaveAccounts(); }
@@ -220,6 +223,7 @@ namespace Fleet
             if (a.Robux >= 0 && r.Width > 900) ui.Text("R$ " + a.Robux.ToString("N0"), r.Right - 420, r.Y + 22, Fonts.Body, Pal.Muted);
             float bx = r.Right - 16;
             bx -= 34; if (ui.Button("r.d" + a.Id, new RectangleF(bx, r.Y + 14, 34, 34), "", Btn.Quiet, "trash")) RemoveOne(a);
+            bx -= 38; if (ui.Button("r.i" + a.Id, new RectangleF(bx, r.Y + 14, 34, 34), "", Btn.Quiet, "info")) OpenDetails(a);
             bx -= 38; if (ui.Button("r.e" + a.Id, new RectangleF(bx, r.Y + 14, 34, 34), "", Btn.Quiet, "edit")) EditOne(a);
             bx -= 110;
             if (run == null) { if (ui.Button("r.l" + a.Id, new RectangleF(bx, r.Y + 14, 104, 34), "Launch", Btn.Primary, "play")) LaunchList(new List<Account> { a }); }
@@ -295,28 +299,52 @@ namespace Fleet
             if (c != null) { loginStatus = ""; AddCookies(new List<string> { c }); } else if (loginStatus.StartsWith("Log in")) loginStatus = "";
         }
 
-        public async void AddCookies(List<string> cookies)
+        public void AddCookies(List<string> cookies) { AddImported(cookies.Select(c => new Imp { Cookie = c }).ToList()); }
+
+        public async void AddImported(List<Imp> items)
         {
             int ok = 0, bad = 0;
-            foreach (string c in cookies)
+            foreach (Imp it in items)
             {
                 try
                 {
-                    Who w = await Roblox.WhoAmI(c);
-                    if (w == null || w.Id < 0) { bad++; Log.Add("One cookie did not work (signed out or locked)."); continue; }
+                    Who w = await Roblox.WhoAmI(it.Cookie);
+                    if (w == null || w.Id < 0) { bad++; Log.Add((it.User.Length > 0 ? it.User + ": " : "") + "the cookie did not work (signed out or locked)."); continue; }
                     Account existing = Store.Accounts.FirstOrDefault(x => x.UserId == w.Id);
-                    if (existing != null) { existing.Cookie = c; existing.Status = 1; Log.Add(w.Name + " was already saved; its cookie was updated."); ok++; continue; }
-                    Account a = new Account { Name = w.Name, Display = w.Display, UserId = w.Id, Cookie = c, Status = 1, LastCheck = DateTime.UtcNow.Ticks, Order = Store.Accounts.Count };
-                    Proxies.AssignNew(a);
-                    Store.Accounts.Add(a);
+                    Account a = existing;
+                    if (a == null) { a = new Account { Name = w.Name, Display = w.Display, UserId = w.Id, Order = Store.Accounts.Count }; Proxies.AssignNew(a); Store.Accounts.Add(a); }
+                    a.Cookie = it.Cookie; a.Status = 1; a.LastCheck = DateTime.UtcNow.Ticks;
+                    if (it.Pass.Length > 0 && a.Password.Length == 0) a.Password = it.Pass;
+                    if (it.Alias.Length > 0 && a.Alias.Length == 0) a.Alias = it.Alias;
+                    if (it.Group.Length > 0 && it.Group != "Default" && a.Group.Length == 0) a.Group = it.Group;
+                    if (it.Note.Length > 0 && a.Note.Length == 0) a.Note = it.Note;
                     ok++;
-                    Log.Add("Added " + a.Label + ".");
-                    RefreshRobux(a);
+                    Log.Add((existing != null ? "Updated " : "Added ") + a.Label + ".");
+                    if (existing == null) RefreshRobux(a);
                 }
                 catch (Exception ex) { bad++; Log.Add("Could not reach Roblox: " + ex.Message); }
             }
             Store.SaveAccounts();
             Log.Add(ok + " added" + (bad > 0 ? ", " + bad + " failed" : "") + ".");
+        }
+
+        public void ImportFromManager()
+        {
+            canvas.Post(delegate
+            {
+                using (OpenFileDialog d = new OpenFileDialog { Title = "Import accounts from another manager", Filter = "Account lists|*.json;*.txt;*.csv;*.list|All files|*.*" })
+                {
+                    if (d.ShowDialog(canvas.FindForm()) != DialogResult.OK) return;
+                    try
+                    {
+                        List<Imp> list = Importer.FromFile(d.FileName);
+                        if (list.Count == 0) { Log.Add("No Roblox cookies were found in that file."); return; }
+                        Log.Add("Found " + list.Count + " account(s) in " + Path.GetFileName(d.FileName) + ", checking them...");
+                        AddImported(list);
+                    }
+                    catch (Exception ex) { Log.Add("Could not read the file: " + ex.Message); }
+                }
+            });
         }
 
         async void RefreshRobux(Account a)

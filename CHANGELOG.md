@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.0
+
+- Four light themes (Paper, Snow, Sand, Sky); the whole interface follows the theme
+- Smooth animations: page slides, staggered cards, count-up numbers, toasts, pulsing running dots, drop-down reveal, spinners
+- Account details: age, Premium, Robux, friends and followers
+- Import accounts from other managers
+- Discord Rich Presence
+- Whole-PC memory cleaner, manual and automatic
+- Experimental proxy settings for the Roblox process
+
 ## 1.0.0
 
 First release of Fleet.

@@ -41,6 +41,8 @@ Close all Roblox windows before turning multi-instance on. The exe is not code-s
 **Accounts**
 - Cards or a list, search, groups, tags, colours, notes, aliases and saved passwords
 - Live status, a Robux balance, and a mute switch per account
+- A details view with account age, Premium, friends and followers
+- Import from other managers (JSON, text or `user:pass:cookie` lists)
 - Bulk actions on the selected accounts: launch, stop, mute, tag, group, colour, private server, check, remove
 - Move everything to another PC as one password-protected file
 
@@ -61,7 +63,8 @@ Close all Roblox windows before turning multi-instance on. The exe is not code-s
 
 **Performance**
 - Frame rate limit and graphics presets, process priority, CPU and memory limits per window
-- Slow down windows you are not using, anti-AFK, memory trim
+- Slow down windows you are not using, anti-AFK, per-window memory trim
+- A whole-PC memory cleaner (working sets, modified and standby lists), manual or automatic
 - Quick configs from Ultimate performance to Best visuals, plus community configs
 - Shareable `.fcfg` configs that never contain accounts, cookies or servers
 
@@ -70,10 +73,11 @@ Close all Roblox windows before turning multi-instance on. The exe is not code-s
 - Presets that restore accounts, game and layout, optionally at startup
 - Macro recorder (record and replay mouse and keyboard)
 - Mini window launcher, compact mode, tray icon, global hotkeys, Windows notifications
-- Discord webhook alerts, proxies per account (one each or several accounts per proxy)
+- Discord webhook alerts and Rich Presence, proxies per account (one each or several accounts per proxy)
+- An experimental option to start Roblox with the account's proxy in its environment
 
 **Look**
-- Eight black themes, your own colour schemes (import and export), six accent colours
+- Eight black and four light themes, your own colour schemes (import and export), six accent colours
 - Smooth animations (page slides, staggered cards, count-up numbers, toasts, pulsing running dots), a dots or grid background or none, and a reduce-motion switch
 - Ten languages: Spanish, Portuguese, French, German, Italian, Turkish, Russian, Polish, Indonesian and Dutch
 
@@ -103,6 +107,9 @@ Close all Roblox windows before turning multi-instance on. The exe is not code-s
 <p align="center">
   <img src="docs/screenshots/settings.png" width="49%" alt="Settings">
   <img src="docs/screenshots/theme-midnight.png" width="49%" alt="Midnight theme with a grid background">
+</p>
+<p align="center">
+  <img src="docs/screenshots/theme-paper.png" width="49%" alt="Paper (light) theme">
 </p>
 
 <sub>The screenshots use made-up accounts.</sub>
