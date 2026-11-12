@@ -18,7 +18,7 @@ namespace Fleet
 
         public PointF Mouse = new PointF(-9999, -9999);
 
-        public bool Animated { get { return Store.Cfg.Wallpaper != "Off" && !Motion.Minimal; } }
+        public bool Animated { get { return Store.Cfg.Wallpaper == "Grid" && !Motion.Minimal; } }
 
         // the dots only need the little patches around them repainted
         public bool Partial { get { return Store.Cfg.Wallpaper == "Dots"; } }
@@ -27,7 +27,7 @@ namespace Fleet
         {
             g.Clear(Pal.Bg);
             if (Motion.Minimal) t = 0;
-            if (Store.Cfg.Wallpaper == "Dots") DrawDots(g, w, h, 1f);
+            if (Store.Cfg.Wallpaper == "Dots") { Fill(w, h); DrawDots(g, w, h, 1f); }
             else if (Store.Cfg.Wallpaper == "Grid") DrawGrid(g, w, h, t);
         }
 

@@ -255,12 +255,8 @@ namespace Fleet
         public void Glass(RectangleF r, float rad, float lift)
         {
             rad = Math.Min(rad, 12);
-            Fill(r, rad, Pal.Alpha(Pal.Mix(Pal.Panel, Pal.Panel2, lift), 150));
+            Fill(r, rad, Pal.Mix(Pal.Panel, Pal.Panel2, lift));
             Stroke(r, rad, Pal.Mix(Pal.Line, Pal.Line2, lift), 1f);
-            PointF[] pts = { new PointF(r.X, r.Y), new PointF(r.Right, r.Bottom) };
-            using (Matrix m = G.Transform) m.TransformPoints(pts);
-            float sc = Math.Max(0.01f, Math.Abs(pts[1].X - pts[0].X) / Math.Max(1f, r.Width));
-            GlassRects.Add(new GlassRect { R = new RectangleF(pts[0].X, pts[0].Y, pts[1].X - pts[0].X, pts[1].Y - pts[0].Y), Rad = rad * sc });
         }
 
         // like Glass, but for things on top of other things (popups, notifications): blurs whatever was drawn under it
@@ -268,7 +264,7 @@ namespace Fleet
         {
             try
             {
-                if (Target != null && !Motion.Minimal)
+                if (false && Target != null)
                 {
                     PointF[] pts = { new PointF(r.X, r.Y), new PointF(r.Right, r.Bottom) };
                     using (Matrix m = G.Transform) m.TransformPoints(pts);
@@ -293,7 +289,7 @@ namespace Fleet
                 }
             }
             catch (Exception) { }
-            Fill(r, rad, Pal.Alpha(tint, alpha));
+            Fill(r, rad, tint);
         }
 
         void GlassOld(RectangleF r, float rad, float lift)
