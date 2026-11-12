@@ -20,7 +20,6 @@ Fleet keeps all your Roblox accounts in one place and starts as many of them as 
 
 ## Community
 
-The Discord server plan is in [docs/DISCORD.md](docs/DISCORD.md).
 
 ## Contents
 
