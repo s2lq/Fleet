@@ -65,6 +65,7 @@ namespace Fleet
     {
         public string Name = "";
         public List<string> AccountIds = new List<string>();
+        public string Layout = "";
         public string Mode = "Game";
         public string Place = "";
         public string Job = "";
@@ -101,7 +102,8 @@ namespace Fleet
 
         public bool MultiInstance = true;
         public string LaunchMethod = "Protocol";
-        public int StaggerMs = 700;
+        public int StaggerMs = 250;
+        public bool StaggerV2;
         public bool UseOwn = true;
         public string LaunchMode = "Game";
         public string LastPlace = "";
@@ -161,6 +163,10 @@ namespace Fleet
         public bool GameProxyEnv = false;
         public bool AutoInstall = false;
 
+        public string LayoutName = "Auto (smart grid)";
+        public bool LayoutAllScreens = false;
+        public bool AutoArrange = true;
+        public bool LaunchAtOnce = true;
         public int LayoutMonitor = 0;
         public int LayoutGap = 6;
         public int LayoutCols = 0;
@@ -235,6 +241,7 @@ namespace Fleet
         public static List<Account> Accounts = new List<Account>();
         public static List<SavedServer> Servers = new List<SavedServer>();
         public static List<Preset> Presets = new List<Preset>();
+        public static List<LayoutDef> UserLayouts = new List<LayoutDef>();
         public static List<JournalEntry> Journal = new List<JournalEntry>();
         public static Settings Cfg = new Settings();
         public static string Password;
@@ -272,6 +279,7 @@ namespace Fleet
             try { if (File.Exists(P("settings.json"))) Cfg = js.Deserialize<Settings>(File.ReadAllText(P("settings.json"), Encoding.UTF8)) ?? new Settings(); }
             catch (Exception) { Cfg = new Settings(); }
             if (Cfg.Wallpaper != "Grid" && Cfg.Wallpaper != "Off") Cfg.Wallpaper = "Dots";
+            if (!Cfg.StaggerV2) { if (Cfg.StaggerMs == 700) Cfg.StaggerMs = 250; Cfg.StaggerV2 = true; }
         }
 
         public static void SaveSettings()
@@ -283,9 +291,11 @@ namespace Fleet
         static void LoadSide()
         {
             try { if (File.Exists(P("presets.json"))) Presets = js.Deserialize<List<Preset>>(File.ReadAllText(P("presets.json"), Encoding.UTF8)) ?? new List<Preset>(); } catch (Exception) { }
+            try { if (File.Exists(P("layouts.json"))) UserLayouts = js.Deserialize<List<LayoutDef>>(File.ReadAllText(P("layouts.json"), Encoding.UTF8)) ?? new List<LayoutDef>(); } catch (Exception) { }
             try { if (File.Exists(P("events.json"))) Journal = js.Deserialize<List<JournalEntry>>(File.ReadAllText(P("events.json"), Encoding.UTF8)) ?? new List<JournalEntry>(); } catch (Exception) { }
         }
 
+        public static void SaveLayouts() { try { Write(P("layouts.json"), Encoding.UTF8.GetBytes(js.Serialize(UserLayouts))); } catch (Exception) { } }
         public static void SavePresets() { try { Write(P("presets.json"), Encoding.UTF8.GetBytes(js.Serialize(Presets))); } catch (Exception) { } }
         public static void SaveJournal()
         {

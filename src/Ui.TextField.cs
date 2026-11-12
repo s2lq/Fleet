@@ -114,8 +114,7 @@ namespace Fleet
                 {
                     bool dbl = Time - st.LastClickAt < 0.4f && Math.Abs(local.X - st.LastClickPos.X) < 5;
                     if (dbl) { st.Anchor = WordLeft(v, Math.Min(v.Length, idx + 1)); st.Caret = WordRight(v, st.Anchor); st.LastClickAt = -9f; }
-                    else { st.Caret = idx; if (!shift) st.Anchor = idx; st.LastClickAt = Time; st.LastClickPos = local; }
-                    Active = id + ".drag";
+                    else { st.Caret = idx; if (!shift) st.Anchor = idx; st.LastClickAt = Time; st.LastClickPos = local; Active = id + ".drag"; }
                 }
             }
             else if (Pressed && focus && !over) { Focus = null; focus = false; }

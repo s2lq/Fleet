@@ -73,7 +73,17 @@ namespace Fleet
             }
         }
 
+        static string robloxCache; static DateTime robloxCacheAt = DateTime.MinValue;
+
         public static string FindRoblox()
+        {
+            if (robloxCache != null && File.Exists(robloxCache) && (DateTime.UtcNow - robloxCacheAt).TotalSeconds < 30) return robloxCache;
+            string found = FindRobloxNow();
+            robloxCache = found; robloxCacheAt = DateTime.UtcNow;
+            return found;
+        }
+
+        static string FindRobloxNow()
         {
             string root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Roblox", "Versions");
             try
@@ -113,6 +123,35 @@ namespace Fleet
             return shared;
         }
 
+        class Prep
+        {
+            public Account A;
+            public Target T;
+            public Task<string> Ticket;
+            public DateTime Ready = DateTime.MinValue;
+            public long Tracker;
+        }
+
+        // login ticket for one account, fetched while the others are still starting
+        static async Task<string> GetTicket(Prep p, SemaphoreSlim gate)
+        {
+            await gate.WaitAsync();
+            try
+            {
+                Account a = p.A;
+                if (Store.Cfg.RefreshCookie)
+                {
+                    string nc = await Roblox.Rotate(a.Cookie);
+                    if (nc != null) { a.Cookie = nc; Log.Add(a.Label + ": cookie refreshed."); }
+                }
+                string t = await Roblox.Ticket(a.Cookie);
+                p.Ready = DateTime.UtcNow;
+                return t;
+            }
+            catch (Exception) { return null; }
+            finally { gate.Release(); }
+        }
+
         public static async Task LaunchMany(List<Account> accounts, Target shared)
         {
             if (Busy) { Log.Add("A launch is already running."); return; }
@@ -122,23 +161,51 @@ namespace Fleet
             Busy = true;
             try
             {
+                Roblox.Warm();
+                Detector.Reset();
                 Perf.SetGraphics(Store.Cfg.GfxPreset);
                 SetFpsCap(Store.Cfg.FpsCap);
                 Log.Add("Launching " + accounts.Count + " account(s).");
                 bool serial = accounts.Any(x => x.FpsCap > 0);
-                SemaphoreSlim gate = new SemaphoreSlim(serial ? 1 : 4);
-                List<Task> jobs = new List<Task>();
-                for (int i = 0; i < accounts.Count; i++)
+
+                // 1. every login ticket is requested at once (a few at a time), so the network waits overlap
+                bool once = Store.Cfg.LaunchAtOnce && !serial;
+                SemaphoreSlim ticketGate = new SemaphoreSlim(once ? Math.Min(16, Math.Max(6, accounts.Count)) : 6);
+                List<Prep> preps = new List<Prep>();
+                foreach (Account a in accounts)
                 {
-                    Account a = accounts[i];
                     Target t = TargetFor(a, shared);
                     if (t.Place <= 0) { Log.Add(a.Label + ": no game chosen. Set a place on the Launch page."); continue; }
-                    BusyText = "Starting " + a.Label + " (" + (i + 1) + "/" + accounts.Count + ")";
-                    await gate.WaitAsync();
-                    jobs.Add(LaunchOne(a, t, gate));
-                    if (i < accounts.Count - 1) await Task.Delay(Math.Max(0, Store.Cfg.StaggerMs));
+                    Prep p = new Prep { A = a, T = t };
+                    p.Ticket = GetTicket(p, ticketGate);
+                    preps.Add(p);
                 }
-                await Task.WhenAll(jobs.ToArray());
+
+                // 2a. all at once: every client starts the same moment, as soon as its ticket is ready
+                List<Task> finishing = new List<Task>();
+                if (once)
+                {
+                    BusyText = "Starting " + preps.Count + " accounts at once";
+                    Task<int>[] founds = await Task.WhenAll(preps.Select(p => StartOne(p)).ToArray());
+                    for (int i = 0; i < preps.Count; i++) if (founds[i] != null) finishing.Add(FinishOne(preps[i], founds[i]));
+                }
+
+                // 2b. or a short time apart; finding each window happens in the background
+                for (int i = 0; !once && i < preps.Count; i++)
+                {
+                    BusyText = "Starting " + preps[i].A.Label + " (" + (i + 1) + "/" + preps.Count + ")";
+                    Task<int> found = await StartOne(preps[i]);
+                    if (found != null)
+                    {
+                        Task fin = FinishOne(preps[i], found);
+                        finishing.Add(fin);
+                        if (serial) await fin;
+                    }
+                    if (!serial && i < preps.Count - 1) await Task.Delay(Math.Max(0, Store.Cfg.StaggerMs));
+                }
+                await Task.WhenAll(finishing.ToArray());
+                Store.SaveAccounts();
+                Perf.Apply();
                 Log.Add("Launch finished.");
                 if (Store.Cfg.HookBatch) Hook.Send("Launch finished", "Started " + accounts.Count + " account(s).", Hook.Green);
             }
@@ -147,71 +214,78 @@ namespace Fleet
             BusyText = "";
         }
 
-        static async Task LaunchOne(Account a, Target t, SemaphoreSlim gate)
+        // starts the Roblox process; returns what will become its process id, or null when it could not start
+        static async Task<Task<int>> StartOne(Prep p)
         {
+            Account a = p.A; Target t = p.T;
             try
             {
                 foreach (Running old in Live.Where(x => x.Acc == a).ToList()) Kill(old);
-                if (Store.Cfg.RefreshCookie)
-                {
-                    string nc = await Roblox.Rotate(a.Cookie);
-                    if (nc != null) { a.Cookie = nc; Store.SaveAccounts(); Log.Add(a.Label + ": cookie refreshed."); }
-                }
-                string ticket = await Roblox.Ticket(a.Cookie);
+                string ticket = await p.Ticket;
+                if (ticket != null && (DateTime.UtcNow - p.Ready).TotalSeconds > 40) ticket = await Roblox.Ticket(a.Cookie);   // tickets go stale
                 if (ticket == null)
                 {
-                    a.Status = 2; Store.SaveAccounts();
+                    a.Status = 2;
                     Log.Add(a.Label + ": signed out. Add the account again with a fresh cookie.");
                     Journal2.Add(a, "SignedOut", "Launch failed: the saved login no longer works.");
-                    return;
+                    return null;
                 }
                 a.Status = 1;
                 long tracker = 100000000000L + (long)(rnd.NextDouble() * 800000000000L);
+                p.Tracker = tracker;
                 long now = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds;
                 string placeUrl = PlaceUrl(t, tracker);
                 if (a.FpsCap > 0) SetFpsCap(a.FpsCap);
                 string pinned = Versions.ExeFor(a);
                 bool proxyEnv = Store.Cfg.GameProxyEnv && !string.IsNullOrEmpty(a.Proxy);
+                ProcessStartInfo psi;
                 if (pinned != null || Store.Cfg.LaunchMethod == "Direct" || proxyEnv)
                 {
                     string exe = pinned ?? FindRoblox();
                     string args = "--app -t " + ticket + " -j \"" + placeUrl + "\" -b " + tracker + " --launchtime=" + now + " --rloc en_us --gloc en_us";
-                    ProcessStartInfo psi = new ProcessStartInfo(exe, args) { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(exe) };
+                    psi = new ProcessStartInfo(exe, args) { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(exe) };
                     if (proxyEnv)
                     {
                         string[] px = a.Proxy.Split(':');
                         string url = "http://" + (px.Length >= 4 ? px[2] + ":" + px[3] + "@" : "") + px[0] + ":" + (px.Length > 1 ? px[1] : "80");
                         psi.EnvironmentVariables["HTTP_PROXY"] = url; psi.EnvironmentVariables["HTTPS_PROXY"] = url; psi.EnvironmentVariables["ALL_PROXY"] = url;
                     }
-                    await Task.Run(delegate { using (Process.Start(psi)) { } });
                 }
                 else
                 {
                     string uri = "roblox-player:1+launchmode:play+gameinfo:" + ticket + "+launchtime:" + now
                         + "+placelauncherurl:" + Uri.EscapeDataString(placeUrl) + "+browsertrackerid:" + tracker
                         + "+robloxLocale:en_us+gameLocale:en_us+channel:+LaunchExp:InApp";
-                    await Task.Run(delegate { using (Process.Start(new ProcessStartInfo(uri) { UseShellExecute = true })) { } });
+                    psi = new ProcessStartInfo(uri) { UseShellExecute = true };
                 }
+                Task<int> found = Detector.Expect(tracker);      // listen before starting, so nothing is missed
+                try { await Task.Run(delegate { using (Process.Start(psi)) { } }); }
+                catch (Exception ex) { Detector.Forget(tracker); Log.Add(a.Label + ": could not start Roblox (" + ex.Message + ")."); return null; }
                 Log.Add(a.Label + ": starting " + t.Describe() + "...");
+                return found;
+            }
+            catch (Exception ex) { Log.Add(a.Label + ": " + ex.Message); return null; }
+        }
 
+        // waits for the window of a started client and registers it
+        static async Task FinishOne(Prep p, Task<int> found)
+        {
+            Account a = p.A;
+            try
+            {
                 int pid = 0;
-                for (int i = 0; i < 300 && pid == 0; i++)
-                {
-                    await Task.Delay(i < 4 ? 250 : 200);
-                    pid = await FindByTracker(tracker);
-                }
+                Task first = await Task.WhenAny(found, Task.Delay(60000));
+                if (first == found) pid = found.Result; else Detector.Forget(p.Tracker);
                 a.LastLaunch = DateTime.UtcNow.Ticks;
-                Store.SaveAccounts();
                 if (pid == 0)
                 {
                     Log.Add(a.Label + ": Roblox did not show up within a minute.");
                     Journal2.Add(a, "LaunchFailed", "Roblox started but no window was found in time.");
                     return;
                 }
-                Running r = new Running { Acc = a, Pid = pid, Spec = t };
+                Running r = new Running { Acc = a, Pid = pid, Spec = p.T };
                 Live.Add(r);
                 ApplyPriority(pid);
-                Perf.Apply();
                 Log.Add(a.Label + ": running (process " + pid + ").");
                 if (a.Muted) MuteLater(pid);
                 if (a.FpsCap > 0)
@@ -221,7 +295,6 @@ namespace Fleet
                 }
             }
             catch (Exception ex) { Log.Add(a.Label + ": " + ex.Message); }
-            finally { gate.Release(); }
         }
 
         static async void MuteLater(int pid)
@@ -261,13 +334,7 @@ namespace Fleet
             return snap;
         }
 
-        static async Task<int> FindByTracker(long tracker)
-        {
-            string needle = tracker.ToString();
-            foreach (KeyValuePair<int, string> kv in await Snapshot())
-                if (kv.Value.IndexOf(needle, StringComparison.Ordinal) >= 0) return kv.Key;
-            return 0;
-        }
+        public static Task<List<KeyValuePair<int, string>>> FreshSnapshot() { snapAt = DateTime.MinValue; return Snapshot(); }
 
         public static void Kill(Running r)
         {
@@ -380,31 +447,7 @@ namespace Fleet
             return freed;
         }
 
-        public static void Arrange(int monitor, int cols, int gap)
-        {
-            if (Live.Count == 0) { Log.Add("No Roblox window to arrange."); return; }
-            Screen[] screens = Screen.AllScreens;
-            Screen sc = screens[Math.Max(0, Math.Min(monitor, screens.Length - 1))];
-            Dictionary<uint, IntPtr> wins = Native.WindowsOf(new HashSet<uint>(Live.Select(r => (uint)r.Pid)));
-            List<IntPtr> handles = new List<IntPtr>();
-            foreach (Running r in Live) { IntPtr h; if (wins.TryGetValue((uint)r.Pid, out h)) handles.Add(h); }
-            if (handles.Count == 0) { Log.Add("The Roblox windows are not visible yet."); return; }
-            Rectangle area = sc.WorkingArea;
-            int c, rows;
-            Grid(handles.Count, cols, area.Width / (double)area.Height, out c, out rows);
-            int w = (area.Width - gap * (c + 1)) / c, h2 = (area.Height - gap * (rows + 1)) / rows;
-            List<Running> ordered = Live.Where(r => wins.ContainsKey((uint)r.Pid)).ToList();
-            for (int i = 0; i < handles.Count; i++)
-            {
-                int cx = i % c, cy = i / c;
-                IntPtr h = handles[i];
-                Native.ShowWindow(h, 9);
-                if (Store.Cfg.LayoutBorderless) Native.SetWindowLong(h, -16, Native.GetWindowLong(h, -16) & ~(0xC00000 | 0x40000));
-                if (Store.Cfg.LayoutRename && i < ordered.Count) Native.SetWindowText(h, ordered[i].Acc.Label);
-                Native.SetWindowPos(h, Store.Cfg.LayoutTopMost ? (IntPtr)(-1) : IntPtr.Zero, area.X + gap + cx * (w + gap), area.Y + gap + cy * (h2 + gap), w, h2, (Store.Cfg.LayoutTopMost ? 0u : Native.SWP_NOZORDER) | Native.SWP_NOACTIVATE | Native.SWP_SHOWWINDOW | 0x20);
-            }
-            Log.Add("Arranged " + handles.Count + " window(s).");
-        }
+        public static void Arrange(int monitor, int cols, int gap) { ArrangeNow(true); }
 
         // not pretty maths but it fits ok
         public static void Grid(int n, int cols, double aspect, out int c, out int rows)

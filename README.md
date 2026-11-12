@@ -56,7 +56,7 @@ Close all Roblox windows before turning multi-instance on. The exe is not code-s
 **Launching**
 - Join a game, an exact server, a private server, or follow a player
 - Search a game by name, recent places, and a public server browser (fewest players, best ping, random)
-- Fast, overlapping starts: the next account begins while the last one loads
+- Start every account at the same moment, or a fraction of a second apart. Login tickets are fetched in parallel and every window is found with one shared detector
 - Auto-relaunch watcher that rejoins the same server, with a crash breaker
 - Roblox version manager: download any recent version, switch the default, delete old ones, or give single accounts their own version
 - A cookie refresh option
@@ -77,7 +77,8 @@ Close all Roblox windows before turning multi-instance on. The exe is not code-s
 - Shareable `.fcfg` configs that never contain accounts, cookies or servers
 
 **Windows and tools**
-- Tile windows on any screen, borderless, always on top, named by account
+- Smart window layout: a grid that fits the screen shape, spread over one or all screens, and it rearranges itself when a window opens or closes
+- 40 built-in layouts (grids, main plus side, corners, cascade and more) and your own: draw them on a preview and save them
 - Presets that restore accounts, game and layout, optionally at startup
 - A scheduler: launch a preset or everyone, or stop everything, at set times and days
 - `fleet://launch/<preset>` links and command line options (`--launch-preset`, `--launch-all`, `--stop-all`), also handed to a running Fleet

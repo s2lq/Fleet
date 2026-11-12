@@ -35,10 +35,10 @@ namespace Fleet
         {
             Title(ui, a, "Launch", "Choose where your accounts go, then start them.");
             RectangleF view = new RectangleF(a.X - 8, a.Y + 82, a.Width + 16, a.Height - 82);
-            ui.BeginScroll(view, 700, Scroll("launch"));
+            ui.BeginScroll(view, 780, Scroll("launch"));
             float y = view.Y + 8;
             float lw = Math.Min(640, a.Width * 0.58f);
-            RectangleF card = new RectangleF(a.X, y, lw, 470);
+            RectangleF card = new RectangleF(a.X, y, lw, 540);
             ui.Glass(card, 18, 0);
             float px = card.X + 28, pw = card.Width - 56;
 
@@ -117,29 +117,33 @@ namespace Fleet
             int nw = ui.Segmented("ln.who", new RectangleF(px, card.Bottom - 62, pw, 42), new string[] { Lang.F("Selected ({0})", selected.Count), Lang.F("All ({0})", Store.Accounts.Count) }, who);
             if (nw != who) { Store.Cfg.OnlySelected = nw == 0; Store.SaveSettings(); }
 
-            RectangleF opt = new RectangleF(a.X + lw + 16, y, a.Width - lw - 16, 470);
+            RectangleF opt = new RectangleF(a.X + lw + 16, y, a.Width - lw - 16, 540);
             ui.Glass(opt, 18, 0);
             float ox = opt.X + 28, ow = opt.Width - 56;
             ui.Text("Options", ox, opt.Y + 22, Fonts.H2, Pal.Text);
             bool own = Tog(ui, "ln.own", "Own game per account", "Accounts with their own game or server use it.", ox, opt.Y + 66, ow, Store.Cfg.UseOwn);
             if (own != Store.Cfg.UseOwn) { Store.Cfg.UseOwn = own; Store.SaveSettings(); }
-            ui.Text("Pause between accounts", ox, opt.Y + 128, Fonts.BodyB, Pal.Text);
-            ui.Text((Store.Cfg.StaggerMs / 1000.0).ToString("0.0") + " s", opt.Right - 28 - 50, opt.Y + 130, Fonts.Small, Pal.A);
-            int st = ui.Slider("ln.stagger", new RectangleF(ox, opt.Y + 158, ow, 24), Store.Cfg.StaggerMs, 0, 5000);
-            st = (st / 100) * 100;
-            if (st != Store.Cfg.StaggerMs) { Store.Cfg.StaggerMs = st; Store.SaveSettings(); }
-            ui.Text("Starts overlap: the next account begins while the last one loads.", ox, opt.Y + 188, Fonts.Small, Pal.Faint);
-            bool mi = Tog(ui, "ln.multi", "Multi-instance", Engine.MultiActive ? "On: several Roblox windows can run." : "Off: Roblox allows only one window.", ox, opt.Y + 232, ow, Store.Cfg.MultiInstance);
+            bool once = Tog(ui, "ln.once", "Start all at once", "Every client opens the same moment. Heavy for a few seconds.", ox, opt.Y + 124, ow, Store.Cfg.LaunchAtOnce);
+            if (once != Store.Cfg.LaunchAtOnce) { Store.Cfg.LaunchAtOnce = once; Store.SaveSettings(); }
+            ui.Text("Pause between accounts", ox, opt.Y + 184, Fonts.BodyB, once ? Pal.Faint : Pal.Text);
+            ui.Text((Store.Cfg.StaggerMs / 1000.0).ToString("0.0") + " s", opt.Right - 28 - 50, opt.Y + 186, Fonts.Small, once ? Pal.Faint : Pal.A);
+            int st = ui.Slider("ln.stagger", new RectangleF(ox, opt.Y + 214, ow, 24), Store.Cfg.StaggerMs, 0, 5000);
+            st = (st / 50) * 50;
+            if (!once && st != Store.Cfg.StaggerMs) { Store.Cfg.StaggerMs = st; Store.SaveSettings(); }
+            ui.Text(once ? "Not used while everything starts at once." : "A short pause is gentler on weak PCs.", ox, opt.Y + 244, Fonts.Small, Pal.Faint);
+            bool aa = Tog(ui, "ln.arr", "Arrange the windows", "Fits them on screen by themselves (see Layout).", ox, opt.Y + 288, ow, Store.Cfg.AutoArrange);
+            if (aa != Store.Cfg.AutoArrange) { Store.Cfg.AutoArrange = aa; Store.SaveSettings(); }
+            bool mi = Tog(ui, "ln.multi", "Multi-instance", Engine.MultiActive ? "On: several Roblox windows can run." : "Off: Roblox allows only one window.", ox, opt.Y + 346, ow, Store.Cfg.MultiInstance);
             if (mi != Store.Cfg.MultiInstance) { Store.Cfg.MultiInstance = mi; Store.SaveSettings(); Engine.SetMultiInstance(mi); }
-            bool rj = Tog(ui, "ln.rejoin", "Auto-relaunch", "Bring accounts back after a crash or kick.", ox, opt.Y + 290, ow, Store.Cfg.AutoRelaunch);
+            bool rj = Tog(ui, "ln.rejoin", "Auto-relaunch", "Bring accounts back after a crash or kick.", ox, opt.Y + 404, ow, Store.Cfg.AutoRelaunch);
             if (rj != Store.Cfg.AutoRelaunch) { Store.Cfg.AutoRelaunch = rj; Store.SaveSettings(); }
-            bool rc = Tog(ui, "ln.rc", "Refresh cookie on launch", "Gets a fresh login each time (signs out other sessions).", ox, opt.Y + 348, ow, Store.Cfg.RefreshCookie);
+            bool rc = Tog(ui, "ln.rc", "Refresh cookie on launch", "Gets a fresh login each time (signs out other sessions).", ox, opt.Y + 462, ow, Store.Cfg.RefreshCookie);
             if (rc != Store.Cfg.RefreshCookie) { Store.Cfg.RefreshCookie = rc; Store.SaveSettings(); }
-            ui.Text("Launch method", ox, opt.Y + 408, Fonts.BodyB, Pal.Text);
-            int lm = ui.Segmented("ln.lm", new RectangleF(ox + ow - 190, opt.Y + 402, 190, 36), new string[] { "Protocol", "Direct" }, Store.Cfg.LaunchMethod == "Direct" ? 1 : 0);
+            ui.Text("Launch method", ox, opt.Y + 514 - 6, Fonts.BodyB, Pal.Text);
+            int lm = ui.Segmented("ln.lm", new RectangleF(ox + ow - 190, opt.Y + 500, 190, 36), new string[] { "Protocol", "Direct" }, Store.Cfg.LaunchMethod == "Direct" ? 1 : 0);
             if ((lm == 1) != (Store.Cfg.LaunchMethod == "Direct")) { Store.Cfg.LaunchMethod = lm == 1 ? "Direct" : "Protocol"; Store.SaveSettings(); }
 
-            float by = y + 494;
+            float by = y + 564;
             bool busy = Engine.Busy;
             if (busy) ui.Spinner(new RectangleF(a.X + 16, by + 17, 18, 18), Pal.OnAccent);
             if (ui.Button("ln.go", new RectangleF(a.X, by, 240, 52), busy ? Engine.BusyText : "Launch", Btn.Primary, busy ? null : "play") && !busy)

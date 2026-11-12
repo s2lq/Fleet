@@ -154,6 +154,16 @@ namespace Fleet
             using (HttpResponseMessage resp = await http.SendAsync(r)) return resp.IsSuccessStatusCode ? null : ((int)resp.StatusCode).ToString();
         }
 
+        // opens the connections to Roblox ahead of time, so the first login ticket does not wait for the TLS handshake
+        public static void Warm()
+        {
+            foreach (string u in new string[] { "https://auth.roblox.com/", "https://users.roblox.com/", "https://www.roblox.com/robots.txt" })
+            {
+                string url = u;
+                Task.Run(async delegate { try { using (HttpResponseMessage r = await http.GetAsync(url)) { } } catch (Exception) { } });
+            }
+        }
+
         public static async Task<bool> Online()
         {
             try { using (HttpResponseMessage r = await http.GetAsync("https://www.roblox.com/robots.txt")) return true; }

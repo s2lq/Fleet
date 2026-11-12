@@ -9,7 +9,7 @@ class TextFieldTests {
  static void Click(float x) { ui.Mouse = new PointF(x, 40); ui.Pressed = true; ui.Down = true; Frame(); ui.Down = false; ui.Released = true; Frame(); }
  static void Type(string s) { ui.Typed = s; Frame(); }
  static void Key(Keys k, Keys m = Keys.None) { mods = m; ui.KeyHits.Add(k); Frame(); mods = Keys.None; }
- static void Main() {
+ public static int Run() {
   Ui.ModKeys = delegate { return mods; }; Ui.ClipGet = delegate { return clip; }; Ui.ClipSet = delegate(string t) { clip = t; };
   Store.Cfg = new Settings(); Frame();
   Click(40); Type("hello world");
@@ -45,6 +45,6 @@ class TextFieldTests {
   ui.Command("f", "selectall"); Frame(); Chk(ui.SelectionOf("f", txt) == txt, "menu command select all");
   txt = ""; Click(200); string longs = new string('w', 80); Type(longs); Chk(txt.Length == 80 && ui.CaretOf("f") == 80, "long text scrolls without breaking");
   Chk(ui.ImeValid, "caret position reported for the input method");
-  Environment.Exit(fails);
+  return fails;
  }
 }
