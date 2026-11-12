@@ -6,7 +6,6 @@
 - a short first launch tour that lights up each page, with a skip button. replay it from settings > about
 - slimmer scrollbars that fade out, grow on hover and can be dragged
 - right click menus and multiline boxes follow the theme
-- discord-bot folder: a script that sets up the discord server (roles, channels, rules, release webhook)
 
 ## 1.8.1
 
