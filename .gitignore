@@ -1,0 +1,9 @@
+*.exe
+*.pdb
+bin/
+obj/
+dist/
+*.fdat
+*.fdat.bad
+settings.json
+crash.txt

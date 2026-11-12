@@ -1,0 +1,19 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile
+        shell: cmd
+        run: call build.bat nostart
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Fleet
+          path: Fleet.exe
