@@ -1,0 +1,23 @@
+{
+  "format": "fleet-config",
+  "version": 1,
+  "name": "Overnight low power",
+  "settings": {
+    "GfxPreset": "Lowest",
+    "FpsCap": 10,
+    "Priority": "Idle",
+    "ThrottleBackground": true,
+    "RamCapMode": "Auto250",
+    "CpuCapMode": "Each",
+    "CpuCapPercent": 5,
+    "AntiAfk": true,
+    "AntiAfkMin": 10,
+    "AutoRelaunch": true,
+    "RejoinSame": true,
+    "Breaker": true,
+    "BreakerMax": 3,
+    "BreakerCooldownMin": 15,
+    "HealthAuto": true,
+    "HealthHours": 3
+  }
+}

@@ -7,3 +7,4 @@ dist/
 *.fdat.bad
 settings.json
 crash.txt
+tests/tests.exe

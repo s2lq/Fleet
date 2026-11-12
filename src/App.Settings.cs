@@ -11,8 +11,6 @@ namespace Fleet
     public partial class App
     {
         int setSub;
-        string verStatus = "";
-        List<Versions.Release> releases = new List<Versions.Release>();
         string[] pxTest = new string[0];
 
         void DrawSettings(Ui ui, RectangleF a)
@@ -23,7 +21,7 @@ namespace Fleet
             RectangleF view = new RectangleF(a.X - 8, a.Y + 82, a.Width + 16, a.Height - 82);
             RectangleF col = new RectangleF(a.X, view.Y + 8, Math.Min(a.Width, 860), 0);
             ScrollState sc = Scroll("settings" + setSub);
-            float[] heights = { 1650, 840, 820, 700, 760, 260 };
+            float[] heights = { 1790, 840, 820, 780, 1500, 460 };
             ui.BeginScroll(view, heights[setSub], sc);
             switch (setSub)
             {
@@ -53,7 +51,7 @@ namespace Fleet
         {
             Settings c = Store.Cfg;
             float y = col.Y;
-            RectangleF s = Sect(ui, col, y, 500, "Window and system");
+            RectangleF s = Sect(ui, col, y, 560, "Window and system");
             float x = s.X + 28, w = s.Width - 56, ry = s.Y + 62;
             bool b;
             b = Tog(ui, "g.mi", "Multi-instance", "Hold Roblox's single-instance lock so several windows can run.", x, ry, w, c.MultiInstance); if (b != c.MultiInstance) { c.MultiInstance = b; Save(); Engine.SetMultiInstance(b); } ry += 52;
@@ -63,14 +61,16 @@ namespace Fleet
             b = Tog(ui, "g.toast", "Notifications", "Windows notices for crashes, kicks and relaunches.", x, ry, w, c.Toasts); if (b != c.Toasts) { c.Toasts = b; if (b) c.Tray = true; Save(); canvas.ApplyShell(); } ry += 52;
             b = Tog(ui, "g.hk", "Global hotkeys", "Ctrl+Alt+F5 launch all, F6 stop all, F7 show or hide.", x, ry, w, c.Hotkeys); if (b != c.Hotkeys) { c.Hotkeys = b; Save(); canvas.ApplyShell(); } ry += 52;
             b = Tog(ui, "g.start", "Start with Windows", "Opens Fleet minimized when you sign in.", x, ry, w, c.StartWithWindows); if (b != c.StartWithWindows) { c.StartWithWindows = b; Save(); Shell.SetStartup(b); } ry += 52;
+            b = Tog(ui, "g.url", "fleet:// links and command line", "Lets links like fleet://launch/NightFarm and scripts start presets.", x, ry, w, c.UrlHandler); if (b != c.UrlHandler) { c.UrlHandler = b; Save(); Shell.SetUrlHandler(b); } ry += 52;
             b = Tog(ui, "g.upd", "Check for updates", "Looks for a new release when Fleet starts.", x, ry, w, c.CheckUpdates); if (b != c.CheckUpdates) { c.CheckUpdates = b; Save(); } ry += 52;
             y = s.Bottom + 16;
 
-            s = Sect(ui, col, y, 410, "Watcher");
+            s = Sect(ui, col, y, 470, "Watcher");
             x = s.X + 28; w = s.Width - 56; ry = s.Y + 62;
             b = Tog(ui, "w.auto", "Auto-relaunch", "Bring an account back when its window closes or it is kicked.", x, ry, w, c.AutoRelaunch); if (b != c.AutoRelaunch) { c.AutoRelaunch = b; Save(); } ry += 52;
             b = Tog(ui, "w.same", "Rejoin the same server", "Try the server the account was in before.", x, ry, w, c.RejoinSame); if (b != c.RejoinSame) { c.RejoinSame = b; Save(); } ry += 52;
             b = Tog(ui, "w.br", "Crash breaker", "Stop relaunching an account that keeps crashing.", x, ry, w, c.Breaker); if (b != c.Breaker) { c.Breaker = b; Save(); } ry += 56;
+            b = Tog(ui, "w.gfx", "Lower graphics after repeated crashes", "Switches the graphics preset to Lowest when the crash breaker trips.", x, ry, w, c.LowerGfxOnCrash); if (b != c.LowerGfxOnCrash) { c.LowerGfxOnCrash = b; Save(); } ry += 56;
             ui.Text(Lang.F("Check every {0} seconds", c.WatcherSec), x, ry, Fonts.BodyB, Pal.Text);
             int ws = ui.Slider("w.sec", new RectangleF(x, ry + 28, w, 24), c.WatcherSec, 20, 300); if (ws != c.WatcherSec) { c.WatcherSec = ws; Save(); } ry += 66;
             ui.Text(Lang.F("Pause {0} min after {1} crashes in 10 min", c.BreakerCooldownMin, c.BreakerMax), x, ry, Fonts.BodyB, Pal.Text);
@@ -248,13 +248,17 @@ namespace Fleet
             if (ui.Button("p.port", new RectangleF(x, s.Y + 62, 280, 42), Store.IsPortable ? "Switch back to normal mode" : "Switch to portable mode", Btn.Ghost, null)) TogglePortable();
             py = s.Bottom + 16;
 
-            s = Sect(ui, col, py, 220, "Backups and moving PCs");
+            s = Sect(ui, col, py, 300, "Backups and moving PCs");
             x = s.X + 28; ry = s.Y + 62;
             if (ui.Button("b.now", new RectangleF(x, ry, 160, 42), "Back up now", Btn.Ghost, null)) { string f = Store.Backup(); Log.Add(f != null ? "Backup saved: " + Path.GetFileName(f) : "Nothing to back up yet."); }
             if (ui.Button("b.res", new RectangleF(x + 170, ry, 190, 42), "Restore a backup", Btn.Ghost, null)) RestoreBackup();
             ry += 54;
             if (ui.Button("b.exp", new RectangleF(x, ry, 230, 42), "Export all accounts", Btn.Ghost, null)) ExportTransfer();
             if (ui.Button("b.imp", new RectangleF(x + 240, ry, 230, 42), "Import accounts", Btn.Ghost, null)) ImportTransfer();
+            ry += 54;
+            if (ui.Button("b.dir", new RectangleF(x, ry, 230, 42), "Also copy backups to a folder", Btn.Ghost, null)) ChooseBackupFolder();
+            ui.Text(Ui.Fit(ui, string.IsNullOrEmpty(Store.Cfg.BackupFolder) ? "No folder chosen. Needs a password, so the copy opens on another PC." : Store.Cfg.BackupFolder, Fonts.Small, w - 330), x + 242, ry + 14, Fonts.Small, Pal.Muted);
+            if (!string.IsNullOrEmpty(Store.Cfg.BackupFolder) && ui.Button("b.dirx", new RectangleF(x + w - 70, ry, 70, 42), "Clear", Btn.Quiet, null)) { Store.Cfg.BackupFolder = ""; Save(); }
             py = s.Bottom + 16;
 
             s = Sect(ui, col, py, 150, "Folder and reset");
@@ -351,48 +355,13 @@ namespace Fleet
             });
         }
 
-        // ---------------------------------------------------------------- roblox
-        void SetRoblox(Ui ui, RectangleF col)
+        void ChooseBackupFolder()
         {
-            Settings c = Store.Cfg;
-            RectangleF s = Sect(ui, col, col.Y, 700, "Roblox version");
-            float x = s.X + 28, w = s.Width - 56, ry = s.Y + 62;
-            string inst = Engine.FindRoblox();
-            ui.Text("Installed: " + (inst != null ? Path.GetFileName(Path.GetDirectoryName(inst)) : "not found"), x, ry, Fonts.Body, Pal.Text); ry += 26;
-            ui.Text("In use: " + (string.IsNullOrEmpty(c.RobloxVersion) ? "the one Roblox keeps updated" : c.RobloxVersion), x, ry, Fonts.Body, Pal.Muted); ry += 40;
-            List<string> mine = Versions.Installed();
-            string[] opts = new string[] { "Roblox's own (newest)" }.Concat(mine).ToArray();
-            int cur = string.IsNullOrEmpty(c.RobloxVersion) ? 0 : Math.Max(0, mine.IndexOf(c.RobloxVersion) + 1);
-            int nc = ui.Picker("r.use", new RectangleF(x, ry, w, 42), opts, cur, "Version to use");
-            if (nc != cur) { c.RobloxVersion = nc == 0 ? "" : mine[nc - 1]; Save(); Log.Add(nc == 0 ? "Using the installed Roblox." : "Using " + c.RobloxVersion + " (direct launch)."); }
-            ry += 56;
-            if (ui.Button("r.list", new RectangleF(x, ry, 230, 42), "Show recent releases", Btn.Ghost, "refresh")) LoadReleases();
-            ui.Text(Ui.Fit(ui, verStatus, Fonts.Small, w - 250), x + 242, ry + 14, Fonts.Small, Pal.Muted);
-            ry += 58;
-            foreach (Versions.Release r in releases.Take(8))
+            canvas.Post(delegate
             {
-                bool have = mine.Contains(r.Version);
-                ui.Text(r.Version, x, ry + 8, Fonts.Body, Pal.Text);
-                ui.Text(r.Date, x + 270, ry + 8, Fonts.Small, Pal.Muted);
-                if (ui.Button("r.d" + r.Version, new RectangleF(x + w - 130, ry, 130, 34), have ? "Downloaded" : "Download", have ? Btn.Ghost : Btn.Primary, null) && !have) DownloadVersion(r.Version);
-                ry += 42;
-            }
-            ui.Text("Old versions usually cannot join games anymore. Roblox forces updates.", x, s.Bottom - 40, Fonts.Small, Pal.Faint);
-        }
-
-        async void LoadReleases()
-        {
-            verStatus = "Loading...";
-            try { releases = await Versions.Recent(); verStatus = releases.Count + " releases"; }
-            catch (Exception ex) { verStatus = "Could not load: " + ex.Message; }
-        }
-
-        async void DownloadVersion(string v)
-        {
-            verStatus = "Downloading " + v + "...";
-            string err = await Versions.Download(v, delegate(string t) { verStatus = t; });
-            verStatus = err ?? "Downloaded " + v + ".";
-            if (err == null) { Store.Cfg.RobloxVersion = v; Store.SaveSettings(); }
+                using (FolderBrowserDialog d = new FolderBrowserDialog { Description = "Pick a folder for extra backup copies, for example a cloud-synced one." })
+                    if (d.ShowDialog(canvas.FindForm()) == DialogResult.OK) { Store.Cfg.BackupFolder = d.SelectedPath; Store.SaveSettings(); if (Store.Password == null) Log.Add("Set a password under Protection or the copies will be skipped."); }
+            });
         }
 
         // ---------------------------------------------------------------- about
@@ -404,9 +373,28 @@ namespace Fleet
             ui.Text("Fleet " + Program.Version, s.X + 112, s.Y + 30, Fonts.H2, Pal.Text);
             ui.Text("An independent Roblox multi-account launcher. Not affiliated with or endorsed by Roblox.", s.X + 112, s.Y + 62, Fonts.Body, Pal.Muted);
             if (ui.Button("ab.upd", new RectangleF(s.X + 28, s.Y + 120, 220, 42), "Check for updates", Btn.Primary, "refresh")) CheckUpdateNow();
-            if (updateText.Length > 0) ui.Text(updateText, s.X + 262, s.Y + 132, Fonts.BodyB, Pal.Good);
+            if (ui.Button("ab.log", new RectangleF(s.X + 260, s.Y + 120, 190, 42), "Open crash log", Btn.Ghost, null)) OpenCrashLog();
+            if (updateText.Length > 0) ui.Text(updateText, s.X + 464, s.Y + 132, Fonts.BodyB, Pal.Good);
             bool au = Tog(ui, "ab.auto", "Install updates automatically", "Downloads, checks the SHA-256 and restarts.", s.X + 28, s.Y + 176, s.Width - 56, Store.Cfg.AutoInstall);
             if (au != Store.Cfg.AutoInstall) { Store.Cfg.AutoInstall = au; Store.SaveSettings(); }
+
+            RectangleF k = new RectangleF(col.X, s.Bottom + 16, col.Width, 240);
+            ui.Glass(k, 18, 0);
+            ui.Text("Keyboard shortcuts", k.X + 28, k.Y + 20, Fonts.H2, Pal.Text);
+            string[,] keys = { { "Ctrl+1 to 9", "switch page" }, { "Ctrl+F", "search accounts" }, { "Ctrl+L", "launch the selected accounts" }, { "Ctrl+Shift+S", "stop everything" }, { "Esc", "close a window" }, { "Ctrl+Shift+K", "compact mode" }, { "Ctrl+Shift+W", "mini window" }, { "Ctrl+Alt+F5/F6/F7", "launch all, stop all, show or hide" } };
+            for (int i = 0; i < keys.GetLength(0); i++)
+            {
+                float cx = k.X + 28 + (i % 2) * (k.Width / 2), cy = k.Y + 62 + (i / 2) * 40;
+                ui.Text(keys[i, 0], cx, cy, Fonts.BodyB, Pal.Text);
+                ui.Text(Ui.Fit(ui, keys[i, 1], Fonts.Small, k.Width / 2 - 220), cx + 190, cy + 3, Fonts.Small, Pal.Muted);
+            }
+        }
+
+        void OpenCrashLog()
+        {
+            string f = Path.Combine(Store.Dir, "crash.txt");
+            try { if (File.Exists(f)) Process.Start(new ProcessStartInfo(f) { UseShellExecute = true }); else Log.Add("No crash log yet. That is good news."); }
+            catch (Exception ex) { Log.Add("Could not open it: " + ex.Message); }
         }
 
         async void CheckUpdateNow()

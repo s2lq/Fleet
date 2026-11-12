@@ -1,0 +1,17 @@
+{
+  "format": "fleet-config",
+  "version": 1,
+  "name": "Six windows, tidy grid",
+  "settings": {
+    "GfxPreset": "Light",
+    "FpsCap": 30,
+    "Priority": "Normal",
+    "ThrottleBackground": true,
+    "RamCapMode": "Fixed500",
+    "CpuCapMode": "Off",
+    "LayoutCols": 3,
+    "LayoutGap": 4,
+    "LayoutBorderless": true,
+    "LayoutRename": true
+  }
+}

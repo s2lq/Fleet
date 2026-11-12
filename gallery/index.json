@@ -1,0 +1,46 @@
+{
+  "items": [
+    {
+      "type": "config",
+      "name": "Overnight low power",
+      "by": "s2lq",
+      "about": "Lowest graphics, 10 FPS, anti-AFK and auto-relaunch for leaving accounts running all night.",
+      "file": "overnight-low-power.fcfg"
+    },
+    {
+      "type": "config",
+      "name": "Six windows, tidy grid",
+      "by": "s2lq",
+      "about": "Light graphics and a 3 column borderless grid with window names.",
+      "file": "six-windows-two-monitors.fcfg"
+    },
+    {
+      "type": "config",
+      "name": "Quiet laptop",
+      "by": "s2lq",
+      "about": "Low graphics, total CPU capped at 50 percent, minimal animation.",
+      "file": "quiet-laptop.fcfg"
+    },
+    {
+      "type": "theme",
+      "name": "Crimson",
+      "by": "s2lq",
+      "about": "Black with a warm red tint.",
+      "file": "crimson.ftheme"
+    },
+    {
+      "type": "theme",
+      "name": "Deep Ocean",
+      "by": "s2lq",
+      "about": "Black with a deep blue tint.",
+      "file": "deep-ocean.ftheme"
+    },
+    {
+      "type": "theme",
+      "name": "Mocha",
+      "by": "s2lq",
+      "about": "Black with a coffee tint.",
+      "file": "mocha.ftheme"
+    }
+  ]
+}

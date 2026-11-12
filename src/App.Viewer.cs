@@ -39,6 +39,16 @@ namespace Fleet
             catch (Exception ex) { if (view3d == v) { viewFailed = true; viewStatus = ex.Message; } }
         }
 
+        // Esc: closes the topmost window, true when there was one
+        public bool CloseTopWindow()
+        {
+            if (viewing != null) { CloseViewer(); return true; }
+            if (detail != null) { detail = null; return true; }
+            return false;
+        }
+
+        public void LaunchSelectedNow() { List<Account> l = SelectedList(); if (l.Count > 0) LaunchList(l); }
+
         void CloseViewer()
         {
             if (view3d != null) view3d.Dispose();

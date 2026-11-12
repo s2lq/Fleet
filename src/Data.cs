@@ -11,6 +11,7 @@ namespace Fleet
     public class Account
     {
         public string Id = Guid.NewGuid().ToString("N");
+        public string RobloxVersion = "";     // blank = the default version
         public string Name = "";
         public string Display = "";
         public string Alias = "";
@@ -70,6 +71,17 @@ namespace Fleet
         public string Private = "";
         public int Cols;
         public int Gap = 6;
+    }
+
+    public class ScheduleItem
+    {
+        public string Name = "";
+        public string Time = "20:00";          // HH:mm
+        public int Days = 127;                 // bit 0 = Monday ... bit 6 = Sunday
+        public string Action = "Launch preset"; // Launch preset | Launch all | Stop all
+        public string Preset = "";
+        public bool Enabled = true;
+        public string LastRun = "";
     }
 
     public class CustomTheme { public string Name = ""; public string Bg = "#000000", Panel = "#0B0B0B", Line = "#222222", Text = "#F0F0F0", Muted = "#969696"; }
@@ -138,6 +150,10 @@ namespace Fleet
         public bool StartWithWindows = false;
 
         public bool CheckUpdates = true;
+        public List<ScheduleItem> Schedule = new List<ScheduleItem>();
+        public bool LowerGfxOnCrash = false;
+        public string BackupFolder = "";
+        public bool UrlHandler = false;
         public bool RichPresence = false;
         public string DiscordAppId = "";
         public bool SysMemAuto = false;
@@ -344,10 +360,21 @@ namespace Fleet
                 Directory.CreateDirectory(dir);
                 string dst = Path.Combine(dir, "accounts-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".fdat");
                 File.Copy(src, dst, true);
+                CopyOut(dst);
                 foreach (string old in Directory.GetFiles(dir, "accounts-*.fdat").OrderByDescending(x => x).Skip(12)) File.Delete(old);
                 return dst;
             }
             catch (Exception) { return null; }
+        }
+
+        // an extra copy in a folder of your choice (a synced cloud folder, a USB stick); only with a password, otherwise it could not be read elsewhere
+        static void CopyOut(string file)
+        {
+            string f = Cfg.BackupFolder;
+            if (string.IsNullOrEmpty(f) || !Directory.Exists(f)) return;
+            if (Password == null) { Log.Add("Backup copy skipped: set a password first, Windows-encrypted accounts cannot be opened on another PC."); return; }
+            try { File.Copy(file, Path.Combine(f, "fleet-" + Path.GetFileName(file)), true); }
+            catch (Exception ex) { Log.Add("Could not copy the backup: " + ex.Message); }
         }
 
         public static void AutoBackup()

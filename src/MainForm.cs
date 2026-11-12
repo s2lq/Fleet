@@ -55,6 +55,7 @@ namespace Fleet
         {
             base.OnShown(e);
             ApplyShell();
+            Cmd.Listen(this);
             View.StartUp();
             if (!string.IsNullOrEmpty(Store.Cfg.StartupPreset))
             {

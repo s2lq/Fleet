@@ -12,12 +12,14 @@ namespace Fleet
 
         void DrawTools(Ui ui, RectangleF a)
         {
-            Title(ui, a, "Tools", "Presets, configs, macros, the activity log and account tools.");
-            toolSub = ui.Segmented("tl.sub", new RectangleF(a.Right - 620, a.Y + 6, 620, 40), new string[] { "Presets", "Configs", "Macro", "Activity", "Account tools" }, toolSub);
+            Title(ui, a, "Tools", "Presets, schedules, macros and more.");
+            toolSub = ui.Segmented("tl.sub", new RectangleF(a.Right - 800, a.Y + 6, 800, 40), new string[] { "Presets", "Configs", "Gallery", "Macro", "Schedule", "Activity", "Account tools" }, toolSub);
             if (toolSub == 0) DrawPresets(ui, a);
             else if (toolSub == 1) DrawConfigs(ui, a);
-            else if (toolSub == 2) DrawMacro(ui, a);
-            else if (toolSub == 3) DrawActivity(ui, a);
+            else if (toolSub == 2) DrawGallery(ui, a);
+            else if (toolSub == 3) DrawMacro(ui, a);
+            else if (toolSub == 4) DrawSchedule(ui, a);
+            else if (toolSub == 5) DrawActivity(ui, a);
             else DrawAccountTools(ui, a);
         }
 

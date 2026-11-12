@@ -24,9 +24,10 @@ namespace Fleet
 
             if (Array.IndexOf(args, "--memclean") >= 0) { MemClean.Clean(); return; }
 
+            string cmd = Cmd.FromArgs(args);
             bool created;
             single = new Mutex(true, "Fleet_SingleInstance", out created);
-            if (!created) return;
+            if (!created) { Cmd.Send(cmd.Length > 0 ? cmd : "show"); return; }
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.ThreadException += delegate(object s, ThreadExceptionEventArgs e) { Crash(e.Exception); };
@@ -37,7 +38,9 @@ namespace Fleet
             Themes.Apply(Store.Cfg.Theme);
             if (!Unlock()) return;
             Engine.SetMultiInstance(Store.Cfg.MultiInstance);
-            Application.Run(new MainForm(Array.IndexOf(args, "--min") >= 0));
+            MainForm main = new MainForm(Array.IndexOf(args, "--min") >= 0);
+            if (cmd.Length > 0) main.Shown += delegate { Cmd.Run(cmd); };
+            Application.Run(main);
             GC.KeepAlive(single);
         }
 

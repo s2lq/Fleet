@@ -47,6 +47,7 @@ namespace Fleet
             if (secondCount % Math.Max(10, Store.Cfg.WatcherSec) == 0) Engine.WatcherTick();
             if (Store.Cfg.HealthAuto && secondCount % (Math.Max(1, Store.Cfg.HealthHours) * 3600) == 0) CheckAll(true);
             if (secondCount % 1800 == 5) RefreshRobuxAll();
+            if (secondCount % 5 == 2) RunSchedule();
             if (secondCount % 15 == 3) Rpc.Update(Engine.Live.Count, Store.Accounts.Count);
             if (Store.Cfg.SysMemAuto && secondCount % 20 == 7) AutoCleanMemory();
         }

@@ -18,6 +18,10 @@ Fleet keeps all your Roblox accounts in one place and starts as many of them as 
   <img src="docs/screenshots/accounts.png" width="49%" alt="Accounts">
 </p>
 
+## Community
+
+The Discord server plan is in [docs/DISCORD.md](docs/DISCORD.md).
+
 ## Contents
 
 - [Getting started](#getting-started)
@@ -45,6 +49,7 @@ Close all Roblox windows before turning multi-instance on. The exe is not code-s
 - A details view with account age, Premium, friends and followers
 - Import from other managers (JSON, text or `user:pass:cookie` lists)
 - Bulk actions on the selected accounts: launch, stop, mute, tag, group, colour, private server, check, remove
+- Real text fields: caret movement, selection, copy and paste, undo, a right-click menu and input for any language
 - Account tools: summary, quick selection, sort, bulk rename, bulk edit, duplicate finder and export of the selected accounts
 - Move everything to another PC as one password-protected file
 
@@ -53,7 +58,8 @@ Close all Roblox windows before turning multi-instance on. The exe is not code-s
 - Search a game by name, recent places, and a public server browser (fewest players, best ping, random)
 - Fast, overlapping starts: the next account begins while the last one loads
 - Auto-relaunch watcher that rejoins the same server, with a crash breaker
-- Roblox version viewer and changer, and a cookie refresh option
+- Roblox version manager: download any recent version, switch the default, delete old ones, or give single accounts their own version
+- A cookie refresh option
 
 **Private servers**
 - Saved named private servers, assigned per account or to a whole selection
@@ -73,6 +79,10 @@ Close all Roblox windows before turning multi-instance on. The exe is not code-s
 **Windows and tools**
 - Tile windows on any screen, borderless, always on top, named by account
 - Presets that restore accounts, game and layout, optionally at startup
+- A scheduler: launch a preset or everyone, or stop everything, at set times and days
+- `fleet://launch/<preset>` links and command line options (`--launch-preset`, `--launch-all`, `--stop-all`), also handed to a running Fleet
+- A gallery of shared configs and themes you can install from inside the app (`gallery/` in this repo, pull requests welcome)
+- Extra backup copies to a folder of your choice (needs a password) and keyboard shortcuts
 - Macro recorder (record and replay mouse and keyboard)
 - Mini window launcher, compact mode, tray icon, global hotkeys, Windows notifications
 - Discord webhook alerts and Rich Presence, proxies per account (one each or several accounts per proxy)

@@ -66,29 +66,29 @@ namespace Fleet
 
         public static bool EditAccount(IWin32Window owner, Account a)
         {
-            using (Form f = Make("Edit " + a.Label, 540, 560))
+            using (Form f = Make("Edit " + a.Label, 540, 620))
             {
-                string[] labels = { "Alias (nickname shown in Fleet)", "Note", "Group", "Tags (comma separated)", "Game for this account (link or place id)", "Private server link", "FPS cap for this account (0 = use the global one)", "Proxy (host:port or host:port:user:pass)", "Password (saved, for re-login)" };
-                string[] values = { a.Alias, a.Note, a.Group, a.Tags, a.Place, a.PrivateLink, a.FpsCap.ToString(), a.Proxy, a.Password };
+                string[] labels = { "Alias (nickname shown in Fleet)", "Note", "Group", "Tags (comma separated)", "Game for this account (link or place id)", "Private server link", "FPS cap for this account (0 = use the global one)", "Proxy (host:port or host:port:user:pass)", "Password (saved, for re-login)", "Roblox version for this account (blank = default)" };
+                string[] values = { a.Alias, a.Note, a.Group, a.Tags, a.Place, a.PrivateLink, a.FpsCap.ToString(), a.Proxy, a.Password, a.RobloxVersion };
                 TextBox[] boxes = new TextBox[labels.Length];
                 int y = 14;
                 for (int i = 0; i < labels.Length; i++)
                 {
                     f.Controls.Add(Lbl(Lang.T(labels[i]), 20, y, 500, Pal.Muted));
                     boxes[i] = Box(20, y + 20, 500, 26, values[i], false);
-                    if (i == labels.Length - 1) boxes[i].UseSystemPasswordChar = true;
+                    if (i == 8) boxes[i].UseSystemPasswordChar = true;
                     f.Controls.Add(boxes[i]);
                     y += 56;
                 }
-                Button ok = Btn(Lang.T("Save"), 410, 512, 110, true, DialogResult.OK);
-                Button no = Btn(Lang.T("Cancel"), 290, 512, 110, false, DialogResult.Cancel);
+                Button ok = Btn(Lang.T("Save"), 410, 572, 110, true, DialogResult.OK);
+                Button no = Btn(Lang.T("Cancel"), 290, 572, 110, false, DialogResult.Cancel);
                 f.Controls.Add(ok); f.Controls.Add(no);
                 f.AcceptButton = ok; f.CancelButton = no;
                 if (f.ShowDialog(owner) != DialogResult.OK) return false;
                 a.Alias = boxes[0].Text.Trim(); a.Note = boxes[1].Text.Trim(); a.Group = boxes[2].Text.Trim(); a.Tags = boxes[3].Text.Trim();
                 a.Place = boxes[4].Text.Trim(); a.PrivateLink = boxes[5].Text.Trim();
                 int fps; a.FpsCap = int.TryParse(boxes[6].Text, out fps) ? Math.Max(0, Math.Min(1000, fps)) : 0;
-                a.Proxy = boxes[7].Text.Trim(); a.ProxyAuto = false; a.Password = boxes[8].Text;
+                a.Proxy = boxes[7].Text.Trim(); a.ProxyAuto = false; a.Password = boxes[8].Text; a.RobloxVersion = boxes[9].Text.Trim();
                 return true;
             }
         }

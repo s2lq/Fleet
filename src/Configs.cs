@@ -49,7 +49,7 @@ namespace Fleet
         {
             "GfxPreset", "FpsCap", "Priority", "ThrottleBackground", "BackgroundFps", "CpuCapMode", "CpuCapPercent", "RamCapMode", "AutoTrim", "TrimEveryMin",
             "LaunchMethod", "StaggerMs", "UseOwn", "MultiInstance", "AntiAfk", "AntiAfkMin", "AutoRelaunch", "WatcherSec", "RejoinSame", "Breaker", "BreakerMax", "BreakerCooldownMin",
-            "HealthAuto", "HealthHours", "Theme", "Accent", "Wallpaper", "ReduceMotion", "LayoutGap", "LayoutCols", "LayoutBorderless", "LayoutTopMost", "LayoutRename", "CustomThemes"
+            "HealthAuto", "HealthHours", "Motion", "LowerGfxOnCrash", "Theme", "Accent", "Wallpaper", "ReduceMotion", "LayoutGap", "LayoutCols", "LayoutBorderless", "LayoutTopMost", "LayoutRename", "CustomThemes"
         };
 
         static readonly JavaScriptSerializer js = new JavaScriptSerializer();

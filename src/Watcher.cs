@@ -120,6 +120,7 @@ namespace Fleet
                 if (Store.Cfg.HookRelaunch) Hook.Send("Client relaunched", d.Acc.Label + " was brought back.", Hook.Yellow);
                 Shell.Toast("Account back", d.Acc.Label + " was relaunched.");
                 bool paused = BreakerRecord(d.Acc);
+                if (paused && Store.Cfg.LowerGfxOnCrash && Store.Cfg.GfxPreset != "Lowest") { Store.Cfg.GfxPreset = "Lowest"; Store.SaveSettings(); Perf.SetGraphics("Lowest"); Log.Add("Watcher: graphics lowered to Lowest because of the crashes."); }
                 if (paused) { Log.Add("Watcher: " + d.Acc.Label + " crashed too often, pausing it for " + Store.Cfg.BreakerCooldownMin + " min."); Hook.Send("Crash breaker", d.Acc.Label + " crashed too often.", Hook.Red); }
                 await LaunchMany(new List<Account> { d.Acc }, Rejoin(d.Acc, d.Spec));
                 await Task.Delay(Math.Max(500, Store.Cfg.StaggerMs));

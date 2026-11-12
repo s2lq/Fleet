@@ -16,6 +16,29 @@ namespace Fleet
         const string Cdn = "https://setup.rbxcdn.com/";
         public static string Root { get { return Path.Combine(Store.Dir, "RobloxVersions"); } }
 
+        public static float Progress;
+        public static string Current = "";
+        public static volatile bool CancelRequested;
+
+        public static string ExeFor(Account a)
+        {
+            string v = a != null && !string.IsNullOrEmpty(a.RobloxVersion) ? a.RobloxVersion : Store.Cfg.RobloxVersion;
+            if (string.IsNullOrEmpty(v)) return null;
+            string exe = Path.Combine(Root, v, "RobloxPlayerBeta.exe");
+            return File.Exists(exe) ? exe : null;
+        }
+
+        public static long SizeOf(string v)
+        {
+            try { return new DirectoryInfo(Path.Combine(Root, v)).EnumerateFiles("*", SearchOption.AllDirectories).Sum(f => f.Length); } catch (Exception) { return 0; }
+        }
+
+        public static string Delete(string v)
+        {
+            try { Directory.Delete(Path.Combine(Root, v), true); if (Store.Cfg.RobloxVersion == v) Store.Cfg.RobloxVersion = ""; foreach (Account a in Store.Accounts) if (a.RobloxVersion == v) a.RobloxVersion = ""; Store.SaveSettings(); Store.SaveAccounts(); return null; }
+            catch (Exception ex) { return ex.Message; }
+        }
+
         public static string PinnedExe()
         {
             string v = Store.Cfg.RobloxVersion;
@@ -47,6 +70,7 @@ namespace Fleet
         {
             string dir = Path.Combine(Root, version);
             if (File.Exists(Path.Combine(dir, "RobloxPlayerBeta.exe"))) return null;
+            CancelRequested = false; Current = version; Progress = 0;
             try
             {
                 Directory.CreateDirectory(dir);
@@ -58,6 +82,8 @@ namespace Fleet
                 foreach (string[] p in pkgs)
                 {
                     n++;
+                    if (CancelRequested) throw new OperationCanceledException("Download cancelled.");
+                    Progress = (n - 1) / (float)pkgs.Count;
                     if (progress != null) progress("Downloading " + n + "/" + pkgs.Count + ": " + p[0]);
                     byte[] data = await Roblox.GetBytes(Cdn + version + "-" + p[0], null);
                     using (MD5 md5 = MD5.Create())
@@ -68,10 +94,12 @@ namespace Fleet
                     ZipFile.ExtractToDirectory(tmp, Path.Combine(dir, target));
                     File.Delete(tmp);
                 }
+                Progress = 1f;
                 File.WriteAllText(Path.Combine(dir, "AppSettings.xml"), "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<Settings>\r\n\t<ContentFolder>content</ContentFolder>\r\n\t<BaseUrl>http://www.roblox.com</BaseUrl>\r\n</Settings>\r\n");
                 return File.Exists(Path.Combine(dir, "RobloxPlayerBeta.exe")) ? null : "The download finished but the player was not in it.";
             }
-            catch (Exception ex) { try { Directory.Delete(dir, true); } catch (Exception) { } return ex.Message; }
+            catch (Exception ex) { try { Directory.Delete(dir, true); } catch (Exception) { } Current = ""; return ex.Message; }
+            finally { if (Progress >= 1f) Current = ""; }
         }
 
         // where each package goes inside the version folder

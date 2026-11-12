@@ -16,6 +16,8 @@ permissions:
 jobs:
   release:
     runs-on: windows-latest
+    env:
+      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
     steps:
       - uses: actions/checkout@v4
       - name: Work out the version
@@ -37,12 +39,25 @@ jobs:
           Copy-Item Fleet.exe dist\Fleet.exe
           $h = (Get-FileHash dist\Fleet.exe -Algorithm SHA256).Hash.ToLower()
           "$h  Fleet.exe" | Out-File -Encoding ascii dist\SHA256SUMS.txt
+      - name: Release notes
+        shell: bash
+        run: |
+          V="${{ steps.v.outputs.version }}"
+          awk -v v="$V" '$0 == "## " v {on=1; next} /^## / {on=0} on' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then echo "see the changelog" > notes.md; fi
       - name: Publish
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.v.outputs.version }}
           name: Fleet ${{ steps.v.outputs.version }}
-          generate_release_notes: true
+          body_path: notes.md
           files: |
             dist/Fleet.exe
             dist/SHA256SUMS.txt
+      - name: Tell discord
+        if: ${{ env.DISCORD_WEBHOOK != '' }}
+        shell: bash
+        run: |
+          V="${{ steps.v.outputs.version }}"
+          BODY=$(python3 -c "import json,sys;print(json.dumps({'content':'**Fleet '+sys.argv[1]+'** is out: https://github.com/${{ github.repository }}/releases/tag/v'+sys.argv[1]+'\n'+open('notes.md').read()[:1500]}))" "$V")
+          curl -s -H "Content-Type: application/json" -d "$BODY" "$DISCORD_WEBHOOK"

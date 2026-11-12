@@ -111,7 +111,7 @@ namespace Fleet
 
     public enum Btn { Primary, Ghost, Danger, Quiet }
 
-    public class Ui
+    public partial class Ui
     {
         public Graphics G;
         public float W, H;
@@ -144,13 +144,13 @@ namespace Fleet
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
             g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-            local = Mouse; clipHit = true; NeedFrames = false; NeedMs = 0; WantHand = false;
+            local = Mouse; clipHit = true; NeedFrames = false; NeedMs = 0; WantHand = false; ImeValid = false;
         }
 
         public void EndFrame()
         {
             if (Released) Active = null;
-            Pressed = false; Released = false; Wheel = 0; Typed = ""; KeyHits.Clear();
+            Pressed = false; Released = false; RightPressed = false; Wheel = 0; Typed = ""; KeyHits.Clear();
         }
 
         public void Set(string id, float v) { anim[id] = v; }
@@ -450,43 +450,6 @@ namespace Fleet
                 if (Released) Active = null;
             }
             return value;
-        }
-
-        public string TextField(string id, RectangleF r, string value, string hint)
-        {
-            bool focus = Focus == id;
-            bool over = Over(r);
-            if (over) WantHand = true;
-            float f = Anim(id + ".f", focus);
-            Fill(r, 9, Pal.Panel);
-            Stroke(r, 9, focus ? Pal.Alpha(Pal.A, 200) : Pal.Line, 1f);
-            if (Pressed) { if (over) { Focus = id; focus = true; } else if (Focus == id) { Focus = null; focus = false; } }
-            string v = value ?? "";
-            if (focus)
-            {
-                foreach (char ch in Typed)
-                {
-                    if (ch == '\b') { if (v.Length > 0) v = v.Substring(0, v.Length - 1); }
-                    else if (ch >= ' ' && ch != 127) v += ch;
-                }
-                if (KeyHits.Contains(Keys.Enter) || KeyHits.Contains(Keys.Escape)) Focus = null;
-                Want(250);
-            }
-            RectangleF inner = new RectangleF(r.X + 14, r.Y, r.Width - 28, r.Height);
-            if (v.Length == 0 && !focus) TextIn(hint, inner, Fonts.Body, Pal.Faint, StringAlignment.Near);
-            else
-            {
-                string shown = v;
-                while (shown.Length > 1 && Measure(shown, Fonts.Body).Width > inner.Width - 4) shown = shown.Substring(1);
-                TextIn(shown, inner, Fonts.Body, Pal.Text, StringAlignment.Near);
-                // blinking caret
-                if (focus && ((int)(Time * 2)) % 2 == 0)
-                {
-                    float cx = inner.X + Measure(shown, Fonts.Body).Width + 1;
-                    G.DrawLine(Pens.White, cx, r.Y + 9, cx, r.Bottom - 9);
-                }
-            }
-            return v;
         }
 
         public void Bar(RectangleF r, float frac, Color a, Color b)

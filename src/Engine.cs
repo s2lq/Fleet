@@ -117,7 +117,7 @@ namespace Fleet
         {
             if (Busy) { Log.Add("A launch is already running."); return; }
             if (accounts.Count == 0) { Log.Add("Pick at least one account."); return; }
-            if (Versions.PinnedExe() == null && FindRoblox() == null) { Log.Add("Roblox is not installed for this Windows user. Install it from roblox.com first."); return; }
+            if (FindRoblox() == null && !accounts.Any(x => Versions.ExeFor(x) != null)) { Log.Add("Roblox is not installed for this Windows user. Install it from roblox.com first."); return; }
             if (Store.Cfg.MultiInstance && !MultiActive) SetMultiInstance(true);
             Busy = true;
             try
@@ -170,7 +170,7 @@ namespace Fleet
                 long now = (long)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalMilliseconds;
                 string placeUrl = PlaceUrl(t, tracker);
                 if (a.FpsCap > 0) SetFpsCap(a.FpsCap);
-                string pinned = Versions.PinnedExe();
+                string pinned = Versions.ExeFor(a);
                 bool proxyEnv = Store.Cfg.GameProxyEnv && !string.IsNullOrEmpty(a.Proxy);
                 if (pinned != null || Store.Cfg.LaunchMethod == "Direct" || proxyEnv)
                 {

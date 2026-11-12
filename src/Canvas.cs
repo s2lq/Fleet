@@ -112,6 +112,38 @@ namespace Fleet
             wallpaper.Draw(g, w, h, ui.Time);
             g.ResetTransform();
             g.DrawImageUnscaled(layer, 0, 0);
+            ImeUpdate();
+            if (ui.ContextField != null) { string id = ui.ContextField; ui.ContextField = null; BeginInvoke((MethodInvoker)delegate { ShowFieldMenu(id); }); }
+        }
+
+        bool imeOn;
+
+        // keep the input method on only while a text field has focus, and next to its caret
+        void ImeUpdate()
+        {
+            if (Environment.OSVersion.Platform != PlatformID.Win32NT || !IsHandleCreated) return;
+            bool want = ui.ImeValid;
+            if (want != imeOn) { imeOn = want; ImeMode = want ? ImeMode.NoControl : ImeMode.Disable; }
+            if (want) Native.PlaceIme(Handle, (int)ui.ImeAt.X, (int)ui.ImeAt.Y);
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            if (m.Msg == 0x10D && imeOn) ImeUpdate();     // a composition is starting
+            base.WndProc(ref m);
+        }
+
+        void ShowFieldMenu(string id)
+        {
+            ContextMenuStrip menu = new ContextMenuStrip { BackColor = Pal.Panel2, ForeColor = Pal.Text, ShowImageMargin = false };
+            string[,] items = { { "Cut", "cut" }, { "Copy", "copy" }, { "Paste", "paste" }, { "Select all", "selectall" } };
+            for (int i = 0; i < 4; i++)
+            {
+                string cmd = items[i, 1];
+                menu.Items.Add(Lang.T(items[i, 0]), null, delegate { ui.Command(id, cmd); Redraw(); });
+            }
+            menu.Closed += delegate { menu.Dispose(); };
+            menu.Show(Cursor.Position);
         }
 
         PointF Pt(MouseEventArgs e) { return new PointF(e.X / scale, e.Y / scale); }
@@ -122,6 +154,7 @@ namespace Fleet
             Focus();
             ui.Mouse = Pt(e);
             if (e.Button == MouseButtons.Left) { ui.Down = true; ui.Pressed = true; }
+            if (e.Button == MouseButtons.Right) ui.RightPressed = true;
             Redraw(); base.OnMouseDown(e);
         }
         protected override void OnMouseUp(MouseEventArgs e)
@@ -139,10 +172,12 @@ namespace Fleet
         {
             ui.KeyHits.Add(e.KeyCode);
             if (e.Control && e.KeyCode >= Keys.D1 && e.KeyCode <= Keys.D9) app.Navigate((int)e.KeyCode - (int)Keys.D1);
+            if (e.KeyCode == Keys.Escape && app.CloseTopWindow()) { Redraw(); e.Handled = true; return; }
+            if (e.Control && !e.Shift && e.KeyCode == Keys.F) { app.Navigate("Accounts"); ui.Focus = "acc.search"; }
+            if (e.Control && !e.Shift && e.KeyCode == Keys.L) app.LaunchSelectedNow();
+            if (e.Control && e.Shift && e.KeyCode == Keys.S) Engine.StopAll();
             if (e.Control && e.Shift && e.KeyCode == Keys.K) { Store.Cfg.Compact = !Store.Cfg.Compact; Store.SaveSettings(); ApplyShell(); }
             if (e.Control && e.Shift && e.KeyCode == Keys.W) ShowMini();
-            if (e.Control && e.KeyCode == Keys.V && Clipboard.ContainsText())
-                ui.Typed += Clipboard.GetText().Replace("\r", "").Replace("\n", " ").Trim();
             Redraw();
             base.OnKeyDown(e);
         }

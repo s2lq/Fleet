@@ -1,0 +1,16 @@
+{
+  "format": "fleet-config",
+  "version": 1,
+  "name": "Quiet laptop",
+  "settings": {
+    "GfxPreset": "Low",
+    "FpsCap": 20,
+    "Priority": "BelowNormal",
+    "ThrottleBackground": true,
+    "RamCapMode": "Auto250",
+    "CpuCapMode": "Total",
+    "CpuCapPercent": 50,
+    "HealthAuto": false,
+    "Motion": 2
+  }
+}

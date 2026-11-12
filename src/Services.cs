@@ -87,6 +87,23 @@ namespace Fleet
             try { Tray.ShowBalloonTip(5000, title, text, ToolTipIcon.Info); } catch (Exception) { }
         }
 
+        public static void SetUrlHandler(bool on)
+        {
+            try
+            {
+                if (on)
+                {
+                    using (Microsoft.Win32.RegistryKey k = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(@"Software\Classes\fleet"))
+                    {
+                        k.SetValue("", "URL:Fleet"); k.SetValue("URL Protocol", "");
+                        using (Microsoft.Win32.RegistryKey c = k.CreateSubKey(@"shell\open\command")) c.SetValue("", "\"" + Application.ExecutablePath + "\" \"%1\"");
+                    }
+                }
+                else Microsoft.Win32.Registry.CurrentUser.DeleteSubKeyTree(@"Software\Classes\fleet", false);
+            }
+            catch (Exception ex) { Log.Add("Could not change the fleet:// link handler: " + ex.Message); }
+        }
+
         public static void SetStartup(bool on)
         {
             try
