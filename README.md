@@ -41,6 +41,7 @@ Close all Roblox windows before turning multi-instance on. The exe is not code-s
 **Accounts**
 - Cards or a list, search, groups, tags, colours, notes, aliases and saved passwords
 - Live status, a Robux balance, and a mute switch per account
+- Click an account's picture to see its 3D avatar from Roblox: drag to turn, scroll to zoom
 - A details view with account age, Premium, friends and followers
 - Import from other managers (JSON, text or `user:pass:cookie` lists)
 - Bulk actions on the selected accounts: launch, stop, mute, tag, group, colour, private server, check, remove

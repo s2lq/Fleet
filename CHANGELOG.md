@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.0
+
+- 3D avatar viewer: click an account's picture, Fleet downloads Roblox's own 3D model and shows it turning; drag to rotate, scroll to zoom
+
 ## 1.2.0
 
 - Account tools (Tools > Account tools): summary of all accounts, quick selection (all, invert, working, signed out, running, by group), sort and reorder, bulk rename, bulk edit of game, note, FPS cap and proxy, duplicate finder, and export of the selected accounts as cookies, user:pass:cookie or a summary CSV

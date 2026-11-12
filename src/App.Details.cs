@@ -45,7 +45,7 @@ namespace Fleet
             ui.Fill(card, 13, Pal.Panel);
 
             float x = card.X + 32, y = card.Y + 30;
-            ui.Avatar(new RectangleF(x, y, 84, 84), a);
+            AvatarButton(ui, new RectangleF(x, y, 84, 84), a);
             ui.Text(Ui.Fit(ui, a.Label, Fonts.H2, w - 200), x + 104, y + 6, Fonts.H2, Pal.Text);
             ui.Text("@" + a.Name + "   id " + a.UserId, x + 104, y + 36, Fonts.Body, Pal.Muted);
             Running run = Engine.Of(a);

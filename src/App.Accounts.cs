@@ -164,7 +164,7 @@ namespace Fleet
             if (!col.IsEmpty) ui.Fill(new RectangleF(r.X, r.Y + 14, 3, r.Height - 28), 1.5f, col);
             Running run = Engine.Of(a);
 
-            ui.Avatar(new RectangleF(r.X + 18, r.Y + 18, 52, 52), a);
+            AvatarButton(ui, new RectangleF(r.X + 18, r.Y + 18, 52, 52), a);
             if (run != null) { ui.Pulse(r.X + 63, r.Y + 63, 7, Pal.Good); ui.Fill(new RectangleF(r.X + 56, r.Y + 56, 14, 14), 7, Pal.Good); }
             ui.Text(Ui.Fit(ui, a.Label, Fonts.BodyB, r.Width - 140), r.X + 82, r.Y + 22, Fonts.BodyB, Pal.Text);
             ui.Text(Ui.Fit(ui, "@" + a.Name, Fonts.Small, r.Width - 140), r.X + 82, r.Y + 44, Fonts.Small, Pal.Muted);
@@ -212,7 +212,7 @@ namespace Fleet
             Color col = ColorOf(a.Color);
             if (!col.IsEmpty) ui.Fill(new RectangleF(r.X, r.Y + 10, 3, r.Height - 20), 1.5f, col);
             SelBox(ui, new RectangleF(r.X + 16, r.Y + 20, 22, 22), a);
-            ui.Avatar(new RectangleF(r.X + 52, r.Y + 11, 40, 40), a);
+            AvatarButton(ui, new RectangleF(r.X + 52, r.Y + 11, 40, 40), a);
             ui.Text(Ui.Fit(ui, a.Label, Fonts.BodyB, 200), r.X + 104, r.Y + 10, Fonts.BodyB, Pal.Text);
             ui.Text(Ui.Fit(ui, "@" + a.Name, Fonts.Small, 200), r.X + 104, r.Y + 33, Fonts.Small, Pal.Muted);
             float x = r.X + 330;

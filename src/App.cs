@@ -64,7 +64,7 @@ namespace Fleet
         public void Render(Ui ui)
         {
             float topH = 76;
-            ui.Blocked = detail != null;
+            ui.Blocked = detail != null || viewing != null;
             DrawTopBar(ui, topH);
             float cw = Math.Min(1200, ui.W - 64);
             RectangleF area = new RectangleF((ui.W - cw) / 2, topH + 8, cw, ui.H - topH - 20);
@@ -94,7 +94,9 @@ namespace Fleet
             ui.G.Restore(slide);
             if (fade < 0.99f) ui.Fill(new RectangleF(0, topH, ui.W, ui.H - topH), 0, Color.FromArgb((int)((1 - fade) * 200), Pal.Bg.R, Pal.Bg.G, Pal.Bg.B));
             ui.Blocked = false;
-            if (detail != null) DrawDetails(ui);
+            if (detail != null) { ui.Blocked = viewing != null; DrawDetails(ui); }
+            ui.Blocked = false;
+            if (viewing != null) DrawViewer(ui);
             DrawToasts(ui);
             ui.Overlay();
         }
