@@ -57,6 +57,7 @@ namespace Fleet
             base.OnShown(e);
             ApplyShell();
             Cmd.Listen(this);
+            Cli.Listen(this);
             View.StartUp();
             if (!string.IsNullOrEmpty(Store.Cfg.StartupPreset))
             {
@@ -156,6 +157,8 @@ namespace Fleet
         {
             if (Store.Accounts.Count > 0) View.AppRef.LaunchList(Store.Accounts.OrderBy(a => a.Order).ToList());
         }
+
+        public void Quit() { quitting = true; Close(); }
 
         public void ShowMain()
         {

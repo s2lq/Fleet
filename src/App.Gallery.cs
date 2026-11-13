@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 
 namespace Fleet
@@ -15,6 +16,31 @@ namespace Fleet
         List<GalleryItem> gallery = new List<GalleryItem>();
         string galStatus = "";
         bool galLoaded;
+
+        // for the command line: the gallery as rows of type, name, author, about, file
+        public async Task<List<string[]>> GalleryRows()
+        {
+            string json = await Roblox.GetText(GalleryBase + "index.json");
+            Dictionary<string, object> d = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(json);
+            List<string[]> rows = new List<string[]>();
+            foreach (object o in (System.Collections.ArrayList)d["items"])
+            {
+                Dictionary<string, object> it = (Dictionary<string, object>)o;
+                rows.Add(new string[] { Convert.ToString(it["type"]), Convert.ToString(it["name"]), it.ContainsKey("by") ? Convert.ToString(it["by"]) : "", it.ContainsKey("about") ? Convert.ToString(it["about"]) : "", Convert.ToString(it["file"]) });
+            }
+            return rows;
+        }
+
+        public async Task<string> GalleryInstallByName(string name)
+        {
+            foreach (string[] r in await GalleryRows())
+                if (r[1].Equals(name, StringComparison.OrdinalIgnoreCase))
+                {
+                    InstallGallery(new GalleryItem { Type = r[0], Name = r[1], By = r[2], About = r[3], File = r[4] });
+                    return "Installing " + r[1] + ".";
+                }
+            return null;
+        }
 
         async void LoadGallery()
         {

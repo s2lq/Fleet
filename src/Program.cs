@@ -11,6 +11,8 @@ namespace Fleet
         public const string Version = "1.0.0";
         static Mutex single;
 
+        [System.Runtime.InteropServices.DllImport("kernel32.dll")] static extern bool AttachConsole(int pid);
+
         [STAThread]
         static void Main(string[] args)
         {
@@ -24,6 +26,13 @@ namespace Fleet
 
             if (Array.IndexOf(args, "--memclean") >= 0) { MemClean.Clean(); return; }
 
+            if (args.Length > 0 && !args[0].StartsWith("fleet://", StringComparison.OrdinalIgnoreCase) && (!args[0].StartsWith("-") || args[0] == "--help" || args[0] == "-h" || args[0] == "/?"))
+            {
+                // a command: run it in the terminal this was started from
+                try { AttachConsole(-1); Console.SetOut(new StreamWriter(Console.OpenStandardOutput()) { AutoFlush = true }); Console.SetError(new StreamWriter(Console.OpenStandardError()) { AutoFlush = true }); } catch (Exception) { }
+                Environment.Exit(CliClient.Run(args, Application.ExecutablePath));
+                return;
+            }
             foreach (string a in args)
                 if (a == "--help" || a == "-h" || a == "/?")
                 {

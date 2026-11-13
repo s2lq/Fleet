@@ -18,5 +18,11 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-echo Done: Fleet.exe
+"%CSC%" /nologo /target:exe /optimize+ /debug- /out:fleetctl.exe /r:System.dll /r:System.Core.dll src\CliClient.cs cli\FleetCtl.cs
+if errorlevel 1 (
+  echo The command line tool failed to build.
+  pause
+  exit /b 1
+)
+echo Done: Fleet.exe and fleetctl.exe
 if /i not "%~1"=="nostart" start "" "%~dp0Fleet.exe"

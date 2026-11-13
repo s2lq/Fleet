@@ -308,9 +308,9 @@ namespace Fleet
             if (c != null) { loginStatus = ""; AddCookies(new List<string> { c }); } else if (loginStatus.StartsWith("Log in")) loginStatus = "";
         }
 
-        public void AddCookies(List<string> cookies) { AddImported(cookies.Select(c => new Imp { Cookie = c }).ToList()); }
+        public Task AddCookies(List<string> cookies) { return AddImported(cookies.Select(c => new Imp { Cookie = c }).ToList()); }
 
-        public async void AddImported(List<Imp> items)
+        public async Task AddImported(List<Imp> items)
         {
             int ok = 0, bad = 0;
             foreach (Imp it in items)
@@ -356,7 +356,7 @@ namespace Fleet
             });
         }
 
-        async void RefreshRobux(Account a)
+        public async Task RefreshRobux(Account a)
         {
             try { long r = await Roblox.Robux(a); if (r >= 0) { a.Robux = r; Store.SaveAccounts(); } } catch (Exception) { }
         }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Fleet
@@ -257,6 +258,19 @@ namespace Fleet
             foreach (Account a in list) Engine.BreakerClear(a);
             if (Store.Cfg.LaunchMode == "Follow") { FollowAndLaunch(list); return; }
             canvas.Post(delegate { Engine.LaunchMany(list, t); });
+        }
+
+        // where a player is right now, as a target to join (null when they are not in a game)
+        public async Task<Target> FollowTarget(string name)
+        {
+            string id = await Roblox.UserIdByName((name ?? "").Trim());
+            if (id == null) { Log.Add("Follow: no player called " + name + "."); return null; }
+            Account any = Store.Accounts.FirstOrDefault(a => a.Status == 1) ?? Store.Accounts.FirstOrDefault();
+            if (any == null) return null;
+            Dictionary<long, Roblox.Presence2> pr = await Roblox.PresenceFull(any.Cookie, new List<long> { long.Parse(id) });
+            Roblox.Presence2 p;
+            if (!pr.TryGetValue(long.Parse(id), out p) || p.Type != 2 || p.PlaceId <= 0) { Log.Add("Follow: " + name + " is not in a game right now."); return null; }
+            return new Target { Mode = p.GameId.Length > 10 ? "Server" : "Game", Place = p.PlaceId, Job = p.GameId };
         }
 
         async void FollowAndLaunch(List<Account> list)

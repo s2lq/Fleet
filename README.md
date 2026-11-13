@@ -77,7 +77,7 @@ Close all Roblox windows before turning multi-instance on. The exe is not code-s
 - Windows arrange themselves: a grid that fits the screen shape with no gaps, spread over one or all screens, and it rearranges itself when a window opens or closes
 - Presets that restore accounts, game and layout, optionally at startup
 - A scheduler: launch a preset or everyone, or stop everything, at set times and days
-- `fleet://launch/<preset>` links and command line options (`--launch-preset`, `--launch-all`, `--stop-all`), also handed to a running Fleet
+- A command line that covers everything the window does (`fleetctl`, see below) and `fleet://` links
 - A gallery of shared configs and themes you can install from inside the app (`gallery/` in this repo, pull requests welcome)
 - Extra backup copies to a folder of your choice (needs a password) and keyboard shortcuts
 - Macro recorder (record and replay mouse and keyboard)
@@ -94,6 +94,35 @@ Close all Roblox windows before turning multi-instance on. The exe is not code-s
 - Accounts encrypted with Windows, or with your own password
 - Portable mode in a `FleetData` folder next to the exe
 - Automatic backups and restore, and an updater that checks the SHA-256 before installing
+
+## Command line
+
+`fleetctl.exe` sits next to `Fleet.exe`. It sends the command to the running Fleet (and starts Fleet minimized if it is not running), prints the answer and returns an exit code, so scripts can use it. `Fleet.exe <command>` works the same way, but a terminal does not wait for it, so use `fleetctl` in scripts. Add `--json` to any listing for machine readable output. Exit codes: 0 fine, 1 the command failed, 2 timed out, 4 could not reach Fleet.
+
+```
+fleetctl help                      every command
+fleetctl help account              the commands of one group
+fleetctl launch nova_farm --place 920587237 --wait
+fleetctl launch --group Farm --private "https://www.roblox.com/games/920587237/x?privateServerLinkCode=abc"
+fleetctl stop --all
+fleetctl account list --json
+fleetctl config set FpsCap 30
+```
+
+| Group | What it covers |
+|---|---|
+| `launch`, `stop`, `restart`, `running` | start accounts by name, group, tag or all, into a place, a server, a private server or a friend; close them |
+| `account ...` | list, info, add (cookie, file, stdin or another manager's export), remove, set fields, tags, mute, check logins, Robux, details, refresh cookie, sort, rename, import, export |
+| `server ...`, `preset ...` | saved private servers (add, assign, check, public list) and presets (save, run, delete) |
+| `layout ...` | arrange now, screens and Roblox's smallest size |
+| `health ...` | login checks, the crash and kick journal, csv export |
+| `config ...`, `theme ...`, `perf ...`, `multi` | every setting by its name (`config list`), themes, frame rate, graphics, priority, one click configs, memory trimming |
+| `optimizer ...`, `roblox ...` | the Roblox optimizer, the Roblox folder, downloading, deleting and choosing versions |
+| `schedule ...`, `macro ...`, `proxy ...`, `webhook test` | scheduled actions, the macro recorder, proxies, the Discord webhook |
+| `backup ...`, `gallery ...`, `update ...`, `data path` | backups, shared configs and themes, updates |
+| `status`, `log`, `show`, `hide`, `mini`, `quit`, `version` | the app itself |
+
+The older `Fleet.exe --launch NAME --place ID`, `--launch-preset`, `--launch-all`, `--stop-all` and `fleet://` links still work.
 
 ## Screenshots
 

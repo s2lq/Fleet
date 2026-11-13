@@ -11,7 +11,7 @@ namespace Fleet
     {
         async void CheckOne(Account a) { await CheckAsync(a, false); }
 
-        async Task CheckAsync(Account a, bool quiet)
+        public async Task CheckAsync(Account a, bool quiet)
         {
             try
             {
